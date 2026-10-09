@@ -1,6 +1,7 @@
 ﻿
 using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Auths;
+using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Vendors;
@@ -37,6 +38,27 @@ namespace Omranco.DAL.Database
 
         public DbSet<VendorStatusHistory> VendorStatusHistory =>
             Set<VendorStatusHistory>();
+        public DbSet<Category> Categories => Set<Category>();
+
+        public DbSet<Product> Products => Set<Product>();
+
+        public DbSet<Unit> Units => Set<Unit>();
+        public DbSet<ProductAttribute> ProductAttributes =>
+    Set<ProductAttribute>();
+
+        public DbSet<ProductAttributeOption> ProductAttributeOptions =>
+            Set<ProductAttributeOption>();
+
+        public DbSet<ProductVariant> ProductVariants =>
+            Set<ProductVariant>();
+
+        public DbSet<ProductVariantValue> ProductVariantValues =>
+            Set<ProductVariantValue>();
+
+        public DbSet<ProductUnit> ProductUnits =>
+            Set<ProductUnit>();
+        public DbSet<VendorCategory> VendorCategories =>
+    Set<VendorCategory>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

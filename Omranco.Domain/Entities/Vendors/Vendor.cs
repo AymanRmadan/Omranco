@@ -58,5 +58,8 @@ namespace Omranco.Domain.Entities.Vendors
 
         public ICollection<VendorStatusHistory> StatusHistory { get; set; }
             = new List<VendorStatusHistory>();
+
+        public ICollection<VendorCategory> Categories { get; set; }
+    = new List<VendorCategory>();
     }
 }

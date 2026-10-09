@@ -38,6 +38,14 @@ namespace Omranco.DAL.Configurations.Projects
                 .HasForeignKey(x => x.CustomerAccountId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(x => x.Zone)
+    .WithMany()
+    .HasForeignKey(x => x.ZoneId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(x => x.ZoneId);
+
+
             builder.HasIndex(x => x.CustomerAccountId);
         }
     }

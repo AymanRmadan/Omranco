@@ -1,10 +1,14 @@
-﻿namespace Omranco.Domain.Entities.Projects
+﻿using Omranco.Domain.Entities.Geography;
+
+namespace Omranco.Domain.Entities.Projects
 {
     public sealed class Project
     {
         public int Id { get; set; }
 
         public int CustomerAccountId { get; set; }
+
+        public int ZoneId { get; set; }
 
         public string Name { get; set; } = string.Empty;
 
@@ -24,7 +28,10 @@
 
 
         // Navigation Properties
+
         public CustomerAccount CustomerAccount { get; set; } = null!;
+
+        public Zone Zone { get; set; } = null!;
 
         public ICollection<ProjectMember> Members { get; set; }
             = new List<ProjectMember>();
