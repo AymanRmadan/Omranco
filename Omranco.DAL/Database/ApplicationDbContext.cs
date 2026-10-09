@@ -1,5 +1,9 @@
 ﻿
+using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Auths;
+using Omranco.Domain.Entities.Geography;
+using Omranco.Domain.Entities.Projects;
+using Omranco.Domain.Entities.Vendors;
 
 namespace Omranco.DAL.Database
 {
@@ -10,6 +14,29 @@ namespace Omranco.DAL.Database
 
         }
 
+        DbSet<CustomerAccount> CustomerAccounts => Set<CustomerAccount>();
+
+        DbSet<CustomerAccountUser> CustomerAccountUsers => Set<CustomerAccountUser>();
+        public DbSet<Project> Projects => Set<Project>();
+
+        public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
+        public DbSet<Governorate> Governorates => Set<Governorate>();
+
+        public DbSet<Zone> Zones => Set<Zone>();
+
+        public DbSet<Vendor> Vendors => Set<Vendor>();
+
+        public DbSet<VendorZone> VendorZones => Set<VendorZone>();
+
+        public DbSet<VendorDocumentRequirement> VendorDocumentRequirements => Set<VendorDocumentRequirement>();
+
+        public DbSet<VendorDocument> VendorDocuments => Set<VendorDocument>();
+
+        public DbSet<VendorPayoutAccount> VendorPayoutAccounts =>
+            Set<VendorPayoutAccount>();
+
+        public DbSet<VendorStatusHistory> VendorStatusHistory =>
+            Set<VendorStatusHistory>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
