@@ -59,6 +59,15 @@ namespace Omranco.BLL
                  .ValidateOnStart();
 
 
+            services.Configure<JwtOptions>(
+                configuration.GetSection("Jwt"));
+
+            services
+                .AddOptions<PaymobOptions>()
+                .Bind(configuration.GetSection(PaymobOptions.SectionName))
+                .ValidateDataAnnotations();
+
+
             return services;
         }
 
