@@ -2,6 +2,7 @@
 using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
+using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
@@ -83,6 +84,12 @@ namespace Omranco.DAL.GenaricBase.Implementations
         public IGenaricRepository<Bid, int> Bids =>
             _bids ??=
                 new GenaricRepository<Bid, int>(_dbContext);
+
+        private IGenaricRepository<Order, int>? _orders;
+
+        public IGenaricRepository<Order, int> Orders =>
+            _orders ??=
+                new GenaricRepository<Order, int>(_dbContext);
 
         public Task<int> SaveChangeAsync()
         {

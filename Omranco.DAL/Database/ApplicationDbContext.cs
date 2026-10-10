@@ -4,6 +4,7 @@ using Omranco.Domain.Entities.Auths;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Geography;
+using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
@@ -45,6 +46,8 @@ namespace Omranco.DAL.Database
         public DbSet<RfqCategory> RfqCategories => Set<RfqCategory>();
         public DbSet<Bid> Bids => Set<Bid>();
         public DbSet<BidItem> BidItems => Set<BidItem>();
+        public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

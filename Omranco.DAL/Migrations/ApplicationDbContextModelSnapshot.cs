@@ -291,6 +291,9 @@ namespace Omranco.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("LeadTimeDays")
                         .HasColumnType("int");
 
@@ -301,6 +304,9 @@ namespace Omranco.DAL.Migrations
                     b.Property<string>("PaymentTerms")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("RfqId")
                         .HasColumnType("int");
@@ -797,6 +803,127 @@ namespace Omranco.DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("Zones", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcceptedByAccountUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BidId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RfqId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ShippingCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByAccountUserId");
+
+                    b.HasIndex("BidId")
+                        .IsUnique();
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("RfqId")
+                        .IsUnique();
+
+                    b.HasIndex("VendorId");
+
+                    b.ToTable("Orders", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("RfqItemId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UnitId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("RfqItemId");
+
+                    b.HasIndex("UnitId");
+
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
@@ -1653,6 +1780,91 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("Governorate");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.Order", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.CustomerAccountUser", "AcceptedByAccountUser")
+                        .WithMany()
+                        .HasForeignKey("AcceptedByAccountUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Bids.Bid", "Bid")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Orders.Order", "BidId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Projects.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Rfqs.Rfq", "Rfq")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Orders.Order", "RfqId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Vendors.Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AcceptedByAccountUser");
+
+                    b.Navigation("Bid");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Rfq");
+
+                    b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderItem", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Catalog.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Omranco.Domain.Entities.Rfqs.RfqItem", "RfqItem")
+                        .WithMany()
+                        .HasForeignKey("RfqItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Catalog.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("RfqItem");
+
+                    b.Navigation("Unit");
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
                 {
                     b.HasOne("Omranco.Domain.Entities.CustomerAccount", "CustomerAccount")
@@ -1974,6 +2186,11 @@ namespace Omranco.DAL.Migrations
             modelBuilder.Entity("Omranco.Domain.Entities.Geography.Governorate", b =>
                 {
                     b.Navigation("Zones");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.Order", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>

@@ -65,6 +65,41 @@
                 "Bid validity date must be in the future.",
                 401
             );
+
+        public static readonly Error AccessDenied =
+    new(
+        "Bid.AccessDenied",
+        "You do not have access to this RFQ.",
+        400
+    );
+
+        public static readonly Error NotFound =
+            new(
+                "Bid.NotFound",
+                "Bid not found.",
+                404
+            );
+
+        public static readonly Error CannotAccept =
+            new(
+                "Bid.CannotAccept",
+                "This bid cannot be accepted.",
+                400
+            );
+
+        public static readonly Error BidExpired =
+            new(
+                "Bid.Expired",
+                "This bid has expired.",
+                400
+            );
+
+        public static readonly Error RfqAlreadyAwarded =
+            new(
+                "Bid.RfqAlreadyAwarded",
+                "A bid has already been accepted for this RFQ.",
+                400
+            );
     }
 }
 

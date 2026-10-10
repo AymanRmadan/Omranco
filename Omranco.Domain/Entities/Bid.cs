@@ -35,6 +35,9 @@ namespace Omranco.Domain.Entities.Bids
         public DateTime? UpdatedAt { get; set; }
 
         public DateTime? WithdrawnAt { get; set; }
+        public DateTime? AcceptedAt { get; set; }
+
+        public DateTime? RejectedAt { get; set; }
 
 
         // Navigation Properties

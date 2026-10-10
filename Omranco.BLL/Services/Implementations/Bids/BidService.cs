@@ -1,17 +1,20 @@
 ﻿using Omranco.BLL.Commons.Errors;
 using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Bids.Requests;
+using Omranco.BLL.DTOS.Bids.Responses;
 using Omranco.BLL.Services.Abstractions.BidServices;
 using Omranco.Domain.Entities.Bids;
+using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Enums;
 using Omranco.Domain.Enums.Bids;
+using Omranco.Domain.Enums.Orders;
 using Omranco.Domain.Enums.Rfqs;
 using Omranco.Domain.Enums.Vendors;
 using Omranco.Domain.Repositories.Abstractions;
 
 namespace Omranco.BLL.Services.Implementations.BidServices
 {
-    public sealed class BidService
-        : IBidService
+    public sealed class BidService : IBidService
     {
         private readonly IUnitOfWork _unitOfWork;
 
@@ -22,10 +25,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         }
 
 
-        public async Task<Result<int>> SubmitAsync(
-            int rfqId,
-            int currentUserId,
-            SubmitBidRequest request)
+        public async Task<Result<int>> SubmitAsync(int rfqId, int currentUserId, SubmitBidRequest request)
         {
             // ========================================
             // Get Vendor
@@ -355,5 +355,452 @@ namespace Omranco.BLL.Services.Implementations.BidServices
                 bid.Id
             );
         }
+
+        public async Task<Result<List<BidComparisonResponse>>> GetComparisonAsync(int rfqId, int currentUserId)
+        {
+            var rfq =
+                await _unitOfWork.Rfqs
+                    .FirstOrDefaultAsync(
+                        x => x.Id == rfqId,
+                        x => x.Project
+                    );
+
+            if (rfq is null)
+            {
+                return Result.Failure<List<BidComparisonResponse>>(
+                    BidErrors.RfqNotFound
+                );
+            }
+
+
+            // ========================================
+            // Customer Access
+            // ========================================
+
+            var accountUser =
+                await _unitOfWork.CustomerAccountUsers
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UserId == currentUserId &&
+                            x.CustomerAccountId ==
+                                rfq.Project.CustomerAccountId &&
+                            x.IsActive
+                    );
+
+            if (accountUser is null)
+            {
+                return Result.Failure<List<BidComparisonResponse>>(
+                    BidErrors.AccessDenied
+                );
+            }
+
+
+            var hasAccess =
+                accountUser.Role ==
+                CustomerAccountUserRole.Owner;
+
+
+            if (!hasAccess)
+            {
+                hasAccess =
+                    await _unitOfWork.ProjectMembers
+                        .AnyAsync(
+                            x =>
+                                x.ProjectId == rfq.ProjectId &&
+                                x.CustomerAccountUserId ==
+                                    accountUser.Id &&
+                                x.IsActive
+                        );
+            }
+
+
+            if (!hasAccess)
+            {
+                return Result.Failure<List<BidComparisonResponse>>(
+                    BidErrors.AccessDenied
+                );
+            }
+
+
+            // ========================================
+            // Load Bids
+            // ========================================
+
+            var bids =
+                await _unitOfWork.Bids
+                    .GetAllAsync(
+                        filter: x =>
+                            x.RfqId == rfqId &&
+                            x.Status != BidStatus.Withdrawn,
+
+                        orderBy: query =>
+                            query
+                                .OrderBy(x => x.SubmittedAt)
+                                .ThenBy(x => x.Id),
+
+                        includes:
+                        [
+                            x => x.Vendor,
+                    x => x.Items
+                        ]
+                    );
+
+
+            /*
+             * OfferNumber بيتحدد حسب ترتيب وصول العرض.
+             *
+             * وبعدين نقدر نرتب النتيجة بالسعر
+             * بدون ما OfferNumber يتغير.
+             */
+
+            var responses = bids
+                .Select((bid, index) =>
+                    new BidComparisonResponse(
+                        bid.Id,
+                        index + 1,
+                        bid.Vendor.RatingAverage,
+                        bid.Vendor.RatingsCount,
+                        bid.Subtotal,
+                        bid.ShippingCostType.ToString(),
+                        bid.ShippingCost,
+                        bid.TotalAmount,
+                        bid.LeadTimeDays,
+                        bid.PaymentTerms,
+                        bid.ValidUntil,
+                        bid.ValidUntil <= DateTime.UtcNow,
+                        bid.Notes,
+                        bid.Items
+                            .Select(item => new BidComparisonItemResponse(
+                                item.RfqItemId,
+                                item.UnitPrice,
+                                item.TotalPrice,
+                                item.Notes
+                            ))
+                            .ToList()
+                    )
+                )
+                .OrderBy(x => x.TotalAmount)
+                .ToList();
+
+
+
+            return Result.Success(responses);
+        }
+
+        public async Task<Result<int>> AcceptAsync(int rfqId, int bidId, int currentUserId)
+        {
+            // ========================================
+            // RFQ
+            // ========================================
+
+            var rfq =
+                await _unitOfWork.Rfqs
+                    .FirstOrDefaultAsync(
+                        x => x.Id == rfqId,
+                        x => x.Project,
+                        x => x.Items
+                    );
+
+
+            if (rfq is null)
+            {
+                return Result.Failure<int>(
+                    BidErrors.RfqNotFound
+                );
+            }
+
+
+            if (rfq.Status == RfqStatus.Awarded)
+            {
+                return Result.Failure<int>(
+                    BidErrors.RfqAlreadyAwarded
+                );
+            }
+
+
+            if (rfq.Status != RfqStatus.Open &&
+                rfq.Status != RfqStatus.Closed)
+            {
+                return Result.Failure<int>(
+                    BidErrors.CannotAccept
+                );
+            }
+
+
+            // ========================================
+            // Customer Access
+            // ========================================
+
+            var accountUser =
+                await _unitOfWork.CustomerAccountUsers
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UserId == currentUserId &&
+                            x.CustomerAccountId ==
+                                rfq.Project.CustomerAccountId &&
+                            x.IsActive
+                    );
+
+
+            if (accountUser is null)
+            {
+                return Result.Failure<int>(
+                    BidErrors.AccessDenied
+                );
+            }
+
+
+            var hasAccess =
+                accountUser.Role ==
+                CustomerAccountUserRole.Owner;
+
+
+            if (!hasAccess)
+            {
+                hasAccess =
+                    await _unitOfWork.ProjectMembers
+                        .AnyAsync(
+                            x =>
+                                x.ProjectId == rfq.ProjectId &&
+                                x.CustomerAccountUserId ==
+                                    accountUser.Id &&
+                                x.IsActive
+                        );
+            }
+
+
+            if (!hasAccess)
+            {
+                return Result.Failure<int>(
+                    BidErrors.AccessDenied
+                );
+            }
+
+
+            // ========================================
+            // Selected Bid
+            // ========================================
+
+            var selectedBid =
+                await _unitOfWork.Bids
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == bidId &&
+                            x.RfqId == rfqId,
+                        x => x.Items
+                    );
+
+
+            if (selectedBid is null)
+            {
+                return Result.Failure<int>(
+                    BidErrors.NotFound
+                );
+            }
+
+
+            if (selectedBid.Status !=
+                BidStatus.Submitted)
+            {
+                return Result.Failure<int>(
+                    BidErrors.CannotAccept
+                );
+            }
+
+
+            if (selectedBid.ValidUntil <=
+                DateTime.UtcNow)
+            {
+                return Result.Failure<int>(
+                    BidErrors.BidExpired
+                );
+            }
+
+
+            // ========================================
+            // Load all bids
+            // ========================================
+
+            var allBids =
+                await _unitOfWork.Bids
+                    .GetAllAsync(
+                        filter: x =>
+                            x.RfqId == rfqId
+                    );
+
+
+            var now = DateTime.UtcNow;
+
+
+            // ========================================
+            // Update Bid Statuses
+            // ========================================
+
+            foreach (var bid in allBids)
+            {
+                if (bid.Status != BidStatus.Submitted)
+                    continue;
+
+
+                var trackedBid =
+                    await _unitOfWork.Bids
+                        .FindAsync(bid.Id);
+
+
+                if (trackedBid is null)
+                    continue;
+
+
+                if (bid.Id == selectedBid.Id)
+                {
+                    trackedBid.Status =
+                        BidStatus.Accepted;
+
+                    trackedBid.AcceptedAt = now;
+                }
+                else
+                {
+                    trackedBid.Status =
+                        BidStatus.Rejected;
+
+                    trackedBid.RejectedAt = now;
+                }
+            }
+
+
+            // ========================================
+            // Award RFQ
+            // ========================================
+
+            var trackedRfq =
+                await _unitOfWork.Rfqs
+                    .FindAsync(rfq.Id);
+
+
+            if (trackedRfq is null)
+            {
+                return Result.Failure<int>(
+                    BidErrors.RfqNotFound
+                );
+            }
+
+
+            trackedRfq.Status =
+                RfqStatus.Awarded;
+
+            trackedRfq.UpdatedAt = now;
+
+
+            // ========================================
+            // Build Order Items
+            // ========================================
+
+            var orderItems =
+                new List<OrderItem>();
+
+
+            foreach (var bidItem in selectedBid.Items)
+            {
+                var rfqItem =
+                    rfq.Items.FirstOrDefault(
+                        x =>
+                            x.Id ==
+                            bidItem.RfqItemId
+                    );
+
+
+                if (rfqItem is null)
+                    continue;
+
+
+                orderItems.Add(
+                    new OrderItem
+                    {
+                        RfqItemId =
+                            rfqItem.Id,
+
+                        ProductId =
+                            rfqItem.ProductId,
+
+                        ProductVariantId =
+                            rfqItem.ProductVariantId,
+
+                        UnitId =
+                            rfqItem.UnitId,
+
+                        Quantity =
+                            rfqItem.Quantity,
+
+                        UnitPrice =
+                            bidItem.UnitPrice,
+
+                        TotalPrice =
+                            bidItem.TotalPrice
+                    }
+                );
+            }
+
+
+            // ========================================
+            // Create Order
+            // ========================================
+
+            var order =
+                new Order
+                {
+                    Number =
+                        GenerateOrderNumber(),
+
+                    RfqId =
+                        rfq.Id,
+
+                    BidId =
+                        selectedBid.Id,
+
+                    ProjectId =
+                        rfq.ProjectId,
+
+                    VendorId =
+                        selectedBid.VendorId,
+
+                    AcceptedByAccountUserId =
+                        accountUser.Id,
+
+                    Status =
+                        OrderStatus.Confirmed,
+
+                    Subtotal =
+                        selectedBid.Subtotal,
+
+                    ShippingCost =
+                        selectedBid.ShippingCost,
+
+                    TotalAmount =
+                        selectedBid.TotalAmount,
+
+                    CreatedAt = now,
+
+                    Items = orderItems
+                };
+
+
+            await _unitOfWork.Orders
+                .InsertAsync(order);
+
+
+            // ========================================
+            // One SaveChanges
+            // ========================================
+
+            await _unitOfWork.SaveChangeAsync();
+
+            return Result.Success(order.Id);
+        }
+
+        private static string GenerateOrderNumber()
+        {
+            return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        }
     }
 }
+

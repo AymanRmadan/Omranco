@@ -1,6 +1,7 @@
 ﻿using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
+using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
@@ -22,7 +23,9 @@ namespace Omranco.Domain.Repositories.Abstractions
         IGenaricRepository<ProjectMember, int> ProjectMembers { get; }
 
         IGenaricRepository<RfqInvitation, int> RfqInvitations { get; }
+
         IGenaricRepository<Bid, int> Bids { get; }
+        IGenaricRepository<Order, int> Orders { get; }
 
         Task<int> SaveChangeAsync();
     }
