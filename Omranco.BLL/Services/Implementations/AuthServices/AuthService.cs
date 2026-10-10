@@ -95,7 +95,7 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
             var result = await _userManager.CreateAsync(user, request.Password);
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, DefaultRoles.Learner);
+                await _userManager.AddToRoleAsync(user, DefaultRoles.Owner);
 
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -133,7 +133,7 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
 
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, DefaultRoles.Learner);
+                await _userManager.AddToRoleAsync(user, DefaultRoles.Owner);
                 return Result.Success();
             }
 

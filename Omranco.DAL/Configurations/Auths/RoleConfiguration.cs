@@ -1,6 +1,6 @@
 ﻿using Omranco.Domain.Entities.Auths;
 
-namespace Omranco.DAL
+namespace Omranco.DAL.Configurations.Auths
 {
     public class RoleConfiguration : IEntityTypeConfiguration<ApplicationRole>
     {

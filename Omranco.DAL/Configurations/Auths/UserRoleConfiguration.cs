@@ -1,4 +1,4 @@
-﻿namespace Omranco.DAL.Configurations
+﻿namespace Omranco.DAL.Configurations.Auths
 {
     public class UserRoleConfiguration : IEntityTypeConfiguration<IdentityUserRole<int>>
     {
