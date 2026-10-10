@@ -1,9 +1,11 @@
 ﻿using Omranco.BLL.Services.Abstractions.AuthServices;
 using Omranco.BLL.Services.Abstractions.BidServices;
+using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.RfqServices;
 using Omranco.BLL.Services.Implementations.AuthServices;
 using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
+using Omranco.BLL.Services.Implementations.OrderServices;
 using Omranco.BLL.Services.Implementations.RfqServices;
 using Omranco.DAL.Database;
 using Omranco.Domain.Entities.Auths;
@@ -20,11 +22,15 @@ namespace Omranco.BLL
             services.AddSingleton<IJwtProvider, JwtProvider>();
             services.AddScoped<IEmailSender, EmailService>();
 
+
+
             services.AddScoped<IRfqMatchingService, RfqMatchingService>();
             services.AddScoped<IRfqService, RfqService>();
-
             services.AddScoped<IRfqInvitationService, RfqInvitationService>();
             services.AddScoped<IBidService, BidService>();
+            services.AddScoped<IOrderService, OrderService>();
+
+
 
             services.AddHttpContextAccessor();
 

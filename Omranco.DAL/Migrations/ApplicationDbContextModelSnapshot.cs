@@ -819,7 +819,16 @@ namespace Omranco.DAL.Migrations
                     b.Property<int>("BidId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("InProgressAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Number")
@@ -832,6 +841,9 @@ namespace Omranco.DAL.Migrations
 
                     b.Property<int>("RfqId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("ShippedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("ShippingCost")
                         .HasPrecision(18, 2)
@@ -924,6 +936,41 @@ namespace Omranco.DAL.Migrations
                     b.HasIndex("UnitId");
 
                     b.ToTable("OrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ChangedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("OldStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("OrderStatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
@@ -1865,6 +1912,25 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderStatusHistory", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
                 {
                     b.HasOne("Omranco.Domain.Entities.CustomerAccount", "CustomerAccount")
@@ -2191,6 +2257,8 @@ namespace Omranco.DAL.Migrations
             modelBuilder.Entity("Omranco.Domain.Entities.Orders.Order", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("StatusHistory");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>

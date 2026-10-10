@@ -33,6 +33,16 @@ namespace Omranco.Domain.Entities.Orders
             = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
+        public DateTime? InProgressAt { get; set; }
+
+        public DateTime? ShippedAt { get; set; }
+
+        public DateTime? DeliveredAt { get; set; }
+
+        public DateTime? CancelledAt { get; set; }
+
+        public ICollection<OrderStatusHistory> StatusHistory { get; set; }
+            = new List<OrderStatusHistory>();
 
 
         // Navigation Properties

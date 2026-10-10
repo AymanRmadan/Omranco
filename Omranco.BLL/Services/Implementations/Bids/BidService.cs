@@ -672,22 +672,16 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             // Award RFQ
             // ========================================
 
-            var trackedRfq =
-                await _unitOfWork.Rfqs
-                    .FindAsync(rfq.Id);
+            var trackedRfq = await _unitOfWork.Rfqs.FindAsync(rfq.Id);
 
 
             if (trackedRfq is null)
             {
-                return Result.Failure<int>(
-                    BidErrors.RfqNotFound
-                );
+                return Result.Failure<int>(BidErrors.RfqNotFound);
             }
 
 
-            trackedRfq.Status =
-                RfqStatus.Awarded;
-
+            trackedRfq.Status = RfqStatus.Awarded;
             trackedRfq.UpdatedAt = now;
 
 
@@ -695,93 +689,66 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             // Build Order Items
             // ========================================
 
-            var orderItems =
-                new List<OrderItem>();
+            var orderItems = new List<OrderItem>();
 
 
             foreach (var bidItem in selectedBid.Items)
             {
                 var rfqItem =
-                    rfq.Items.FirstOrDefault(
-                        x =>
-                            x.Id ==
-                            bidItem.RfqItemId
-                    );
+                    rfq.Items.FirstOrDefault(x => x.Id == bidItem.RfqItemId);
 
 
                 if (rfqItem is null)
                     continue;
 
 
-                orderItems.Add(
-                    new OrderItem
-                    {
-                        RfqItemId =
-                            rfqItem.Id,
-
-                        ProductId =
-                            rfqItem.ProductId,
-
-                        ProductVariantId =
-                            rfqItem.ProductVariantId,
-
-                        UnitId =
-                            rfqItem.UnitId,
-
-                        Quantity =
-                            rfqItem.Quantity,
-
-                        UnitPrice =
-                            bidItem.UnitPrice,
-
-                        TotalPrice =
-                            bidItem.TotalPrice
-                    }
+                orderItems.Add(new OrderItem
+                {
+                    RfqItemId = rfqItem.Id,
+                    ProductId = rfqItem.ProductId,
+                    ProductVariantId = rfqItem.ProductVariantId,
+                    UnitId = rfqItem.UnitId,
+                    Quantity = rfqItem.Quantity,
+                    UnitPrice = bidItem.UnitPrice,
+                    TotalPrice = bidItem.TotalPrice
+                }
                 );
             }
-
 
             // ========================================
             // Create Order
             // ========================================
 
-            var order =
-                new Order
-                {
-                    Number =
-                        GenerateOrderNumber(),
+            var order = new Order
+            {
+                Number = GenerateOrderNumber(),
+                RfqId = rfq.Id,
+                BidId = selectedBid.Id,
+                ProjectId = rfq.ProjectId,
+                VendorId = selectedBid.VendorId,
+                AcceptedByAccountUserId = accountUser.Id,
+                Status = OrderStatus.Confirmed,
+                Subtotal = selectedBid.Subtotal,
+                ShippingCost = selectedBid.ShippingCost,
+                TotalAmount = selectedBid.TotalAmount,
+                CreatedAt = now,
+                Items = orderItems,
+                StatusHistory = [
+                            new OrderStatusHistory
+                            {
+                                OldStatus = null,
 
-                    RfqId =
-                        rfq.Id,
+                                NewStatus =
+                                    OrderStatus.Confirmed,
 
-                    BidId =
-                        selectedBid.Id,
+                                ChangedByUserId =
+                                    currentUserId,
 
-                    ProjectId =
-                        rfq.ProjectId,
-
-                    VendorId =
-                        selectedBid.VendorId,
-
-                    AcceptedByAccountUserId =
-                        accountUser.Id,
-
-                    Status =
-                        OrderStatus.Confirmed,
-
-                    Subtotal =
-                        selectedBid.Subtotal,
-
-                    ShippingCost =
-                        selectedBid.ShippingCost,
-
-                    TotalAmount =
-                        selectedBid.TotalAmount,
-
-                    CreatedAt = now,
-
-                    Items = orderItems
-                };
+                                ChangedAt =
+                                    now
+                            }
+]
+            };
 
 
             await _unitOfWork.Orders

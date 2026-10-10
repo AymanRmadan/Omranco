@@ -26,6 +26,10 @@ namespace Omranco.Domain.Repositories.Abstractions
 
         IGenaricRepository<Bid, int> Bids { get; }
         IGenaricRepository<Order, int> Orders { get; }
+        IGenaricRepository<OrderStatusHistory, int> OrderStatusHistory { get; }
+        IGenaricRepository<Product, int> Products { get; }
+        IGenaricRepository<ProductVariant, int> ProductVariants { get; }
+        IGenaricRepository<Unit, int> Units { get; }
 
         Task<int> SaveChangeAsync();
     }

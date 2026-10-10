@@ -20,16 +20,20 @@ namespace Omranco.DAL.GenaricBase.Implementations
         private IGenaricRepository<Category, int>? _categories;
         private IGenaricRepository<Vendor, int>? _vendors;
 
-        private IGenaricRepository<CustomerAccountUser, int>?
-            _customerAccountUsers;
+        private IGenaricRepository<CustomerAccountUser, int>? _customerAccountUsers;
 
-        private IGenaricRepository<ProjectMember, int>?
-            _projectMembers;
+        private IGenaricRepository<ProjectMember, int>? _projectMembers;
 
-        private IGenaricRepository<RfqInvitation, int>?
-            _rfqInvitations;
+        private IGenaricRepository<RfqInvitation, int>? _rfqInvitations;
 
         private IGenaricRepository<Bid, int>? _bids;
+        private IGenaricRepository<OrderStatusHistory, int>? _orderStatusHistory;
+
+        private IGenaricRepository<Product, int>? _products;
+
+        private IGenaricRepository<ProductVariant, int>? _productVariants;
+
+        private IGenaricRepository<Unit, int>? _units;
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
@@ -90,6 +94,35 @@ namespace Omranco.DAL.GenaricBase.Implementations
         public IGenaricRepository<Order, int> Orders =>
             _orders ??=
                 new GenaricRepository<Order, int>(_dbContext);
+
+        public IGenaricRepository<OrderStatusHistory, int>
+    OrderStatusHistory =>
+        _orderStatusHistory ??=
+            new GenaricRepository<OrderStatusHistory, int>(
+                _dbContext
+            );
+
+
+        public IGenaricRepository<Product, int> Products => _products ??=
+                    new GenaricRepository<Product, int>(
+                        _dbContext
+                    );
+
+
+        public IGenaricRepository<ProductVariant, int>
+            ProductVariants =>
+                _productVariants ??=
+                    new GenaricRepository<ProductVariant, int>(
+                        _dbContext
+                    );
+
+
+        public IGenaricRepository<Unit, int>
+            Units =>
+                _units ??=
+                    new GenaricRepository<Unit, int>(
+                        _dbContext
+                    );
 
         public Task<int> SaveChangeAsync()
         {
