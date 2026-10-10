@@ -3,12 +3,14 @@ using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Auths;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
+using Omranco.Domain.Entities.Commissions;
 using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
+using Omranco.Domain.Entities.Wallets;
 
 namespace Omranco.DAL.Database
 {
@@ -51,6 +53,14 @@ namespace Omranco.DAL.Database
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
         public DbSet<VendorRating> VendorRatings => Set<VendorRating>();
+        public DbSet<CommissionRule> CommissionRules => Set<CommissionRule>();
+        public DbSet<VendorWallet> VendorWallets => Set<VendorWallet>();
+
+
+
+        public DbSet<VendorWalletTransaction>
+            VendorWalletTransactions =>
+                Set<VendorWalletTransaction>();
 
 
         protected override void OnModelCreating(ModelBuilder builder)

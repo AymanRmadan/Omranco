@@ -2,11 +2,13 @@
 using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
+using Omranco.Domain.Entities.Commissions;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
+using Omranco.Domain.Entities.Wallets;
 using Omranco.Domain.Repositories.Abstractions;
 
 namespace Omranco.DAL.GenaricBase.Implementations
@@ -134,6 +136,35 @@ namespace Omranco.DAL.GenaricBase.Implementations
                 _dbContext
             );
 
+
+        private IGenaricRepository<CommissionRule, int>?
+    _commissionRules;
+
+        public IGenaricRepository<CommissionRule, int>
+            CommissionRules =>
+                _commissionRules ??=
+                    new GenaricRepository<CommissionRule, int>(
+                        _dbContext
+                    );
+
+
+        private IGenaricRepository<VendorWallet, int>? _vendorWallets;
+
+        private IGenaricRepository<VendorWalletTransaction, int>? _vendorWalletTransactions;
+        public IGenaricRepository<VendorWallet, int>
+    VendorWallets =>
+        _vendorWallets ??=
+            new GenaricRepository<VendorWallet, int>(
+                _dbContext
+            );
+
+
+        public IGenaricRepository<VendorWalletTransaction, int>
+            VendorWalletTransactions =>
+                _vendorWalletTransactions ??=
+                    new GenaricRepository<VendorWalletTransaction, int>(
+                        _dbContext
+                    );
 
 
         public Task<int> SaveChangeAsync()

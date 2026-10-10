@@ -674,6 +674,47 @@ namespace Omranco.DAL.Migrations
                     b.ToTable("Units", (string)null);
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Commissions.CommissionRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Percentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ValidTo")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive", "ValidFrom");
+
+                    b.ToTable("CommissionRules", (string)null);
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.CustomerAccount", b =>
                 {
                     b.Property<int>("Id")
@@ -822,6 +863,14 @@ namespace Omranco.DAL.Migrations
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("CommissionAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CommissionRate")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -867,6 +916,10 @@ namespace Omranco.DAL.Migrations
 
                     b.Property<int>("VendorId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("VendorNetAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -1561,6 +1614,103 @@ namespace Omranco.DAL.Migrations
                     b.ToTable("VendorZones", (string)null);
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWallet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Balance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalEarned")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalSettled")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VendorId")
+                        .IsUnique();
+
+                    b.ToTable("VendorWallets", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWalletTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceBefore")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("VendorWalletId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("VendorWalletId", "CreatedAt");
+
+                    b.ToTable("VendorWalletTransactions", (string)null);
+                });
+
             modelBuilder.Entity("VendorDocument", b =>
                 {
                     b.Property<int>("Id")
@@ -2230,6 +2380,35 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("Zone");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWallet", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Vendors.Vendor", "Vendor")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Wallets.VendorWallet", "VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWalletTransaction", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Omranco.Domain.Entities.Wallets.VendorWallet", "VendorWallet")
+                        .WithMany("Transactions")
+                        .HasForeignKey("VendorWalletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("VendorWallet");
+                });
+
             modelBuilder.Entity("VendorDocument", b =>
                 {
                     b.HasOne("Omranco.Domain.Entities.Vendors.VendorDocumentRequirement", "Requirement")
@@ -2361,6 +2540,11 @@ namespace Omranco.DAL.Migrations
             modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorDocumentRequirement", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWallet", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }

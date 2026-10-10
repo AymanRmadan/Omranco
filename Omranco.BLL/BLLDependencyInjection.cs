@@ -1,14 +1,18 @@
 ﻿using Omranco.BLL.Services.Abstractions.AuthServices;
 using Omranco.BLL.Services.Abstractions.BidServices;
+using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.RatingServices;
 using Omranco.BLL.Services.Abstractions.RfqServices;
+using Omranco.BLL.Services.Abstractions.WalletServices;
 using Omranco.BLL.Services.Implementations.AuthServices;
 using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
+using Omranco.BLL.Services.Implementations.CommissionServices;
 using Omranco.BLL.Services.Implementations.OrderServices;
 using Omranco.BLL.Services.Implementations.RatingServices;
 using Omranco.BLL.Services.Implementations.RfqServices;
+using Omranco.BLL.Services.Implementations.WalletServices;
 using Omranco.DAL.Database;
 using Omranco.Domain.Entities.Auths;
 
@@ -32,6 +36,8 @@ namespace Omranco.BLL
             services.AddScoped<IBidService, BidService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IRatingService, RatingService>();
+            services.AddScoped<ICommissionService, CommissionService>();
+            services.AddScoped<IVendorWalletService, VendorWalletService>();
 
 
 

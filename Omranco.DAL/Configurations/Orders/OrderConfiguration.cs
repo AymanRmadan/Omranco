@@ -62,6 +62,15 @@ namespace Omranco.DAL.Configurations.Orders
                 .WithMany()
                 .HasForeignKey(x => x.AcceptedByAccountUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(x => x.CommissionRate)
+    .HasPrecision(5, 2);
+
+            builder.Property(x => x.CommissionAmount)
+                .HasPrecision(18, 2);
+
+            builder.Property(x => x.VendorNetAmount)
+                .HasPrecision(18, 2);
         }
     }
 }

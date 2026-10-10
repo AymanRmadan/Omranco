@@ -3,6 +3,7 @@ using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Bids.Requests;
 using Omranco.BLL.DTOS.Bids.Responses;
 using Omranco.BLL.Services.Abstractions.BidServices;
+using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Enums;
@@ -17,11 +18,13 @@ namespace Omranco.BLL.Services.Implementations.BidServices
     public sealed class BidService : IBidService
     {
         private readonly IUnitOfWork _unitOfWork;
-
+        private readonly ICommissionService _commissionService;
         public BidService(
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ICommissionService commissionService)
         {
             _unitOfWork = unitOfWork;
+            _commissionService = commissionService;
         }
 
 
@@ -719,6 +722,19 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             // Create Order
             // ========================================
 
+            var commissionResult = await _commissionService.CalculateAsync(selectedBid.TotalAmount);
+
+            if (commissionResult.IsFailure)
+            {
+                return Result.Failure<int>(
+                    commissionResult.Error
+                );
+            }
+
+            var commission = commissionResult.Value!;
+
+
+
             var order = new Order
             {
                 Number = GenerateOrderNumber(),
@@ -733,6 +749,11 @@ namespace Omranco.BLL.Services.Implementations.BidServices
                 TotalAmount = selectedBid.TotalAmount,
                 CreatedAt = now,
                 Items = orderItems,
+
+                CommissionRate = commission.Rate,
+                CommissionAmount = commission.CommissionAmount,
+                VendorNetAmount = commission.VendorNetAmount,
+
                 StatusHistory = [
                             new OrderStatusHistory
                             {

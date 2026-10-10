@@ -41,6 +41,15 @@ namespace Omranco.Domain.Entities.Orders
 
         public DateTime? CancelledAt { get; set; }
 
+
+
+        public decimal CommissionRate { get; set; }
+
+        public decimal CommissionAmount { get; set; }
+
+        public decimal VendorNetAmount { get; set; }
+
+
         public ICollection<OrderStatusHistory> StatusHistory { get; set; }
             = new List<OrderStatusHistory>();
 
