@@ -4,6 +4,7 @@ using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
+using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
 using Omranco.Domain.Repositories.Abstractions;
@@ -34,6 +35,8 @@ namespace Omranco.DAL.GenaricBase.Implementations
         private IGenaricRepository<ProductVariant, int>? _productVariants;
 
         private IGenaricRepository<Unit, int>? _units;
+        private IGenaricRepository<VendorRating, int>? _vendorRatings;
+
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
@@ -123,6 +126,15 @@ namespace Omranco.DAL.GenaricBase.Implementations
                     new GenaricRepository<Unit, int>(
                         _dbContext
                     );
+
+        public IGenaricRepository<VendorRating, int>
+    VendorRatings =>
+        _vendorRatings ??=
+            new GenaricRepository<VendorRating, int>(
+                _dbContext
+            );
+
+
 
         public Task<int> SaveChangeAsync()
         {

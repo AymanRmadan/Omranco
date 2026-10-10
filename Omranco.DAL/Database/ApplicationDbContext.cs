@@ -6,6 +6,7 @@ using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
+using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
 
@@ -49,6 +50,9 @@ namespace Omranco.DAL.Database
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
+        public DbSet<VendorRating> VendorRatings => Set<VendorRating>();
+
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
 

@@ -1065,6 +1065,45 @@ namespace Omranco.DAL.Migrations
                     b.ToTable("ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Ratings.VendorRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerAccountUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerAccountUserId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("VendorId");
+
+                    b.ToTable("VendorRatings", (string)null);
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Rfqs.Rfq", b =>
                 {
                     b.Property<int>("Id")
@@ -1974,6 +2013,33 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("CustomerAccountUser");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Ratings.VendorRating", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.CustomerAccountUser", "CustomerAccountUser")
+                        .WithMany()
+                        .HasForeignKey("CustomerAccountUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Ratings.VendorRating", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Vendors.Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CustomerAccountUser");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Vendor");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Rfqs.Rfq", b =>

@@ -3,6 +3,7 @@ using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Projects;
+using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
 
@@ -30,6 +31,7 @@ namespace Omranco.Domain.Repositories.Abstractions
         IGenaricRepository<Product, int> Products { get; }
         IGenaricRepository<ProductVariant, int> ProductVariants { get; }
         IGenaricRepository<Unit, int> Units { get; }
+        IGenaricRepository<VendorRating, int> VendorRatings { get; }
 
         Task<int> SaveChangeAsync();
     }
