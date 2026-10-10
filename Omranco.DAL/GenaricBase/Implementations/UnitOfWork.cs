@@ -4,6 +4,7 @@ using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Commissions;
 using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
@@ -38,6 +39,10 @@ namespace Omranco.DAL.GenaricBase.Implementations
 
         private IGenaricRepository<Unit, int>? _units;
         private IGenaricRepository<VendorRating, int>? _vendorRatings;
+
+        private IGenaricRepository<Payment, int>? _payments;
+
+        private IGenaricRepository<PaymentAttempt, int>? _paymentAttempts;
 
 
         public UnitOfWork(ApplicationDbContext dbContext)
@@ -165,6 +170,22 @@ namespace Omranco.DAL.GenaricBase.Implementations
                     new GenaricRepository<VendorWalletTransaction, int>(
                         _dbContext
                     );
+
+        public IGenaricRepository<Payment, int>
+    Payments =>
+        _payments ??=
+            new GenaricRepository<Payment, int>(
+                _dbContext
+            );
+
+
+        public IGenaricRepository<PaymentAttempt, int>
+            PaymentAttempts =>
+                _paymentAttempts ??=
+                    new GenaricRepository<PaymentAttempt, int>(
+                        _dbContext
+                    );
+
 
 
         public Task<int> SaveChangeAsync()

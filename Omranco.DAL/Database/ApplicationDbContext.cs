@@ -6,6 +6,7 @@ using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Commissions;
 using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
@@ -55,12 +56,9 @@ namespace Omranco.DAL.Database
         public DbSet<VendorRating> VendorRatings => Set<VendorRating>();
         public DbSet<CommissionRule> CommissionRules => Set<CommissionRule>();
         public DbSet<VendorWallet> VendorWallets => Set<VendorWallet>();
-
-
-
-        public DbSet<VendorWalletTransaction>
-            VendorWalletTransactions =>
-                Set<VendorWalletTransaction>();
+        public DbSet<VendorWalletTransaction> VendorWalletTransactions => Set<VendorWalletTransaction>();
+        public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
 
 
         protected override void OnModelCreating(ModelBuilder builder)

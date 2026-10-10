@@ -6,9 +6,11 @@ using Omranco.BLL.Services.Abstractions.BidServices;
 using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Enums;
 using Omranco.Domain.Enums.Bids;
 using Omranco.Domain.Enums.Orders;
+using Omranco.Domain.Enums.Payments;
 using Omranco.Domain.Enums.Rfqs;
 using Omranco.Domain.Enums.Vendors;
 using Omranco.Domain.Repositories.Abstractions;
@@ -738,6 +740,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             var order = new Order
             {
                 Number = GenerateOrderNumber(),
+
                 RfqId = rfq.Id,
                 BidId = selectedBid.Id,
                 ProjectId = rfq.ProjectId,
@@ -747,38 +750,34 @@ namespace Omranco.BLL.Services.Implementations.BidServices
                 Subtotal = selectedBid.Subtotal,
                 ShippingCost = selectedBid.ShippingCost,
                 TotalAmount = selectedBid.TotalAmount,
-                CreatedAt = now,
-                Items = orderItems,
-
                 CommissionRate = commission.Rate,
                 CommissionAmount = commission.CommissionAmount,
                 VendorNetAmount = commission.VendorNetAmount,
+                CreatedAt = now,
+                Items = orderItems,
 
                 StatusHistory = [
-                            new OrderStatusHistory
-                            {
-                                OldStatus = null,
+                    new OrderStatusHistory
+                    {
+                        OldStatus = null,
+                        NewStatus =OrderStatus.Confirmed,
+                        ChangedByUserId =currentUserId,
+                        ChangedAt =now
+                    }
+                ],
 
-                                NewStatus =
-                                    OrderStatus.Confirmed,
-
-                                ChangedByUserId =
-                                    currentUserId,
-
-                                ChangedAt =
-                                    now
-                            }
-]
+                Payment = new Payment
+                {
+                    Amount = selectedBid.TotalAmount,
+                    Currency = "EGP",
+                    Status = PaymentStatus.Pending,
+                    PaidAmount = 0,
+                    RefundedAmount = 0,
+                    CreatedAt = now
+                }
             };
 
-
-            await _unitOfWork.Orders
-                .InsertAsync(order);
-
-
-            // ========================================
-            // One SaveChanges
-            // ========================================
+            await _unitOfWork.Orders.InsertAsync(order);
 
             await _unitOfWork.SaveChangeAsync();
 

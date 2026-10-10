@@ -3,6 +3,7 @@ using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Commissions;
 using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
@@ -39,6 +40,10 @@ namespace Omranco.Domain.Repositories.Abstractions
         IGenaricRepository<VendorWallet, int> VendorWallets { get; }
 
         IGenaricRepository<VendorWalletTransaction, int> VendorWalletTransactions { get; }
+
+        IGenaricRepository<Payment, int> Payments { get; }
+
+        IGenaricRepository<PaymentAttempt, int> PaymentAttempts { get; }
 
         Task<int> SaveChangeAsync();
     }

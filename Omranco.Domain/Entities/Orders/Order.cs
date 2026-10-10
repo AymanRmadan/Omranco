@@ -1,4 +1,5 @@
 ﻿using Omranco.Domain.Entities.Bids;
+using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
@@ -64,10 +65,10 @@ namespace Omranco.Domain.Entities.Orders
 
         public Vendor Vendor { get; set; } = null!;
 
-        public CustomerAccountUser AcceptedByAccountUser
-        { get; set; } = null!;
+        public CustomerAccountUser AcceptedByAccountUser { get; set; } = null!;
 
-        public ICollection<OrderItem> Items { get; set; }
-            = new List<OrderItem>();
+        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+        public Payment? Payment { get; set; }
+
     }
 }
