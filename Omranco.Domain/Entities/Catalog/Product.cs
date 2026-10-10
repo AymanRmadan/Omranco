@@ -1,8 +1,7 @@
 ﻿namespace Omranco.Domain.Entities.Catalog
 {
-    public sealed class Product
+    public sealed class Product : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int CategoryId { get; set; }
 

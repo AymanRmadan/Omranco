@@ -2,7 +2,7 @@
 
 namespace Omranco.Domain.Entities.Vendors
 {
-    public sealed class VendorCategory
+    public sealed class VendorCategory : BaseEntity<int>
     {
         public int VendorId { get; set; }
 

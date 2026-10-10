@@ -2,9 +2,8 @@
 
 namespace Omranco.Domain.Entities.Vendors
 {
-    public sealed class VendorDocumentRequirement
+    public sealed class VendorDocumentRequirement : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

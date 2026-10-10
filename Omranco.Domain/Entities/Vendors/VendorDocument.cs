@@ -1,10 +1,10 @@
-﻿using Omranco.Domain.Entities.Auths;
+﻿using Omranco.Domain.Entities;
+using Omranco.Domain.Entities.Auths;
 using Omranco.Domain.Entities.Vendors;
 using Omranco.Domain.Enums.Vendors;
 
-public sealed class VendorDocument
+public sealed class VendorDocument : BaseEntity<int>
 {
-    public int Id { get; set; }
 
     public int VendorId { get; set; }
 

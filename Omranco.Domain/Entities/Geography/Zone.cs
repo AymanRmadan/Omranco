@@ -1,8 +1,7 @@
 ﻿namespace Omranco.Domain.Entities.Geography
 {
-    public sealed class Zone
+    public sealed class Zone : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int GovernorateId { get; set; }
 

@@ -2,9 +2,8 @@
 
 namespace Omranco.Domain.Entities.Projects
 {
-    public sealed class Project
+    public sealed class Project : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int CustomerAccountId { get; set; }
 

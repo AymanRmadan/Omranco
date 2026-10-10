@@ -2,9 +2,8 @@
 
 namespace Omranco.Domain.Entities.Catalog
 {
-    public sealed class Category
+    public sealed class Category : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int? ParentId { get; set; }
 

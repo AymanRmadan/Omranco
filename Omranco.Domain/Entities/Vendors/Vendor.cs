@@ -1,12 +1,12 @@
 ﻿using Omranco.Domain.Entities.Auths;
 using Omranco.Domain.Entities.Geography;
+using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Enums.Vendors;
 
 namespace Omranco.Domain.Entities.Vendors
 {
-    public sealed class Vendor
+    public sealed class Vendor : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int OwnerUserId { get; set; }
 
@@ -61,5 +61,8 @@ namespace Omranco.Domain.Entities.Vendors
 
         public ICollection<VendorCategory> Categories { get; set; }
     = new List<VendorCategory>();
+        public ICollection<RfqInvitation> RfqInvitations { get; set; }
+    = new List<RfqInvitation>();
+
     }
 }

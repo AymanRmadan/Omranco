@@ -2,9 +2,8 @@
 
 namespace Omranco.Domain.Entities.Vendors
 {
-    public sealed class VendorPayoutAccount
+    public sealed class VendorPayoutAccount : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public int VendorId { get; set; }
 

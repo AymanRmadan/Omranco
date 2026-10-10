@@ -1,6 +1,6 @@
 ﻿namespace Omranco.Domain.Entities.Catalog
 {
-    public sealed class ProductVariantValue
+    public sealed class ProductVariantValue : BaseEntity<int>
     {
         public int ProductVariantId { get; set; }
 

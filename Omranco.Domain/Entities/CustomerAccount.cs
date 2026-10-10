@@ -3,9 +3,8 @@ using Omranco.Domain.Enums;
 
 namespace Omranco.Domain.Entities
 {
-    public sealed class CustomerAccount
+    public sealed class CustomerAccount : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
 
