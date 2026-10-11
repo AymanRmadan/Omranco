@@ -48,7 +48,7 @@ namespace Omranco.BLL
             services.AddScoped<IOrderCancellationService, OrderCancellationService>();
             services.AddScoped<IOrderDisputeService, OrderDisputeService>();
             services.AddScoped<IVendorPayoutService, VendorPayoutService>();
-
+            services.AddScoped<IVendorPayoutAccountService, VendorPayoutAccountService>();
 
 
             services.AddHttpContextAccessor();
