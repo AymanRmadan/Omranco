@@ -7,6 +7,7 @@ using Omranco.BLL.DTOS.Payments.Requests;
 using Omranco.BLL.DTOS.Payments.Responses;
 using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.PaymentServices;
+using Omranco.BLL.Services.Abstractions.WalletServices;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Enums;
@@ -24,19 +25,23 @@ public sealed class PaymentService : IPaymentService
     private readonly PaymobOptions _paymobOptions;
     private readonly IPaymobHmacService _paymobHmacService;
     private readonly IOrderSettlementService _orderSettlementService;
+    private readonly IVendorWalletService _vendorWalletService;
 
     public PaymentService(
             IUnitOfWork unitOfWork,
             IPaymobService paymobService,
             IPaymobHmacService paymobHmacService,
             IOrderSettlementService orderSettlementService,
-            IOptions<PaymobOptions> paymobOptions)
+            IOptions<PaymobOptions> paymobOptions,
+            IVendorWalletService vendorWalletService
+)
     {
         _unitOfWork = unitOfWork;
         _paymobService = paymobService;
         _paymobHmacService = paymobHmacService;
         _orderSettlementService = orderSettlementService;
         _paymobOptions = paymobOptions.Value;
+        _vendorWalletService = vendorWalletService;
     }
 
 
@@ -939,7 +944,7 @@ public sealed class PaymentService : IPaymentService
 
 
         // ==========================================
-        // Find original successful attempt
+        // Find original successful payment attempt
         // ==========================================
 
         var paymentAttempt =
@@ -965,7 +970,18 @@ public sealed class PaymentService : IPaymentService
 
 
         // ==========================================
-        // Convert Refund Amount
+        // Refund Transaction Id
+        // ==========================================
+
+        var refundTransactionId =
+            transaction.Id.ToString(
+                CultureInfo.InvariantCulture
+            );
+
+
+        // ==========================================
+        // Convert Paymob Amount
+        // cents / piastres -> EGP
         // ==========================================
 
         var refundAmount =
@@ -995,13 +1011,13 @@ public sealed class PaymentService : IPaymentService
                 );
 
 
+        // ==========================================
+        // Refund not Processing?
+        // Check if this webhook was already processed
+        // ==========================================
+
         if (refund is null)
         {
-            /*
-             * ممكن تكون نفس callback اتبعت قبل كده
-             * والRefund بالفعل خلصت.
-             */
-
             var completedRefund =
                 await _unitOfWork
                     .PaymentRefunds
@@ -1014,26 +1030,54 @@ public sealed class PaymentService : IPaymentService
                                 paymentAttempt.Id
                             &&
                             x.PaymobRefundTransactionId ==
-                                transaction.Id.ToString()
+                                refundTransactionId
                     );
 
 
             if (completedRefund is not null)
             {
-                // Duplicate webhook
+                if (completedRefund.Status == PaymentRefundStatus.Succeeded)
+                {
+                    var walletReult = await _vendorWalletService.ApplyRefundAsync(completedRefund.Id);
+
+
+                    if (walletReult.IsFailure)
+                    {
+                        return Result.Failure(
+                            walletReult.Error
+                        );
+                    }
+                }
+
+
                 return Result.Success();
             }
 
 
             return Result.Failure(
-                PaymentRefundErrors
-                    .RefundNotFound
+                PaymentRefundErrors.RefundNotFound
             );
         }
 
 
         // ==========================================
-        // Get tracked refund
+        // Pending callback
+        // ==========================================
+
+        if (transaction.Pending)
+        {
+            /*
+             * Pending does NOT mean Failed.
+             *
+             * Keep:
+             * PaymentRefund = Processing
+             */
+            return Result.Success();
+        }
+
+
+        // ==========================================
+        // Get tracked Refund
         // ==========================================
 
         var trackedRefund =
@@ -1047,8 +1091,7 @@ public sealed class PaymentService : IPaymentService
         if (trackedRefund is null)
         {
             return Result.Failure(
-                PaymentRefundErrors
-                    .RefundNotFound
+                PaymentRefundErrors.RefundNotFound
             );
         }
 
@@ -1061,23 +1104,13 @@ public sealed class PaymentService : IPaymentService
         // Refund Failed
         // ==========================================
 
-        if (!transaction.Success ||
-            transaction.Pending)
+        if (!transaction.Success)
         {
-            /*
-             * Pending callback مش معناها فشل.
-             */
-            if (transaction.Pending)
-            {
-                return Result.Success();
-            }
-
-
             trackedRefund.Status =
                 PaymentRefundStatus.Failed;
 
             trackedRefund.PaymobRefundTransactionId =
-                transaction.Id.ToString();
+                refundTransactionId;
 
             trackedRefund.FailureMessage =
                 transaction.Data?.Message
@@ -1088,6 +1121,87 @@ public sealed class PaymentService : IPaymentService
 
             trackedRefund.UpdatedAt =
                 now;
+
+
+            // ======================================
+            // Cancellation Refund Failed?
+            // ======================================
+
+            var cancellation =
+                await _unitOfWork
+                    .OrderCancellations
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.PaymentRefundId ==
+                                trackedRefund.Id
+                            &&
+                            x.Status ==
+                                OrderCancellationStatus
+                                    .RefundProcessing
+                    );
+
+
+            if (cancellation is not null)
+            {
+                var trackedCancellation =
+                    await _unitOfWork
+                        .OrderCancellations
+                        .FindAsync(
+                            cancellation.Id
+                        );
+
+
+                if (trackedCancellation is not null)
+                {
+                    trackedCancellation.Status =
+                        OrderCancellationStatus.Failed;
+
+                    trackedCancellation.FailureReason =
+                        trackedRefund.FailureMessage;
+
+                    trackedCancellation.UpdatedAt =
+                        now;
+                }
+            }
+
+
+            // ======================================
+            // Dispute Refund Failed?
+            // ======================================
+
+            var dispute =
+                await _unitOfWork
+                    .OrderDisputes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.PaymentRefundId ==
+                                trackedRefund.Id
+                            &&
+                            x.Status ==
+                                OrderDisputeStatus
+                                    .RefundProcessing
+                    );
+
+
+            if (dispute is not null)
+            {
+                var trackedDispute =
+                    await _unitOfWork
+                        .OrderDisputes
+                        .FindAsync(
+                            dispute.Id
+                        );
+
+
+                if (trackedDispute is not null)
+                {
+                    trackedDispute.Status =
+                        OrderDisputeStatus.RefundFailed;
+
+                    trackedDispute.UpdatedAt =
+                        now;
+                }
+            }
 
 
             await _unitOfWork
@@ -1118,11 +1232,41 @@ public sealed class PaymentService : IPaymentService
         }
 
 
+        // ==========================================
+        // Safety - calculate new refunded amount
+        // ==========================================
+
+        var newRefundedAmount =
+            trackedPayment.RefundedAmount
+            +
+            trackedRefund.Amount;
+
+
+        if (newRefundedAmount >
+            trackedPayment.PaidAmount)
+        {
+            return Result.Failure(
+                PaymentRefundErrors
+                    .AmountExceedsRefundable
+            );
+        }
+
+
+        // ==========================================
+        // Complete Refund
+        // ==========================================
+
         trackedRefund.Status =
             PaymentRefundStatus.Succeeded;
 
         trackedRefund.PaymobRefundTransactionId =
-            transaction.Id.ToString();
+            refundTransactionId;
+
+        trackedRefund.FailureCode =
+            null;
+
+        trackedRefund.FailureMessage =
+            null;
 
         trackedRefund.CompletedAt =
             now;
@@ -1135,29 +1279,11 @@ public sealed class PaymentService : IPaymentService
         // Update Payment
         // ==========================================
 
-        var newRefundedAmount =
-            trackedPayment.RefundedAmount
-            +
-            trackedRefund.Amount;
+        trackedPayment.RefundedAmount =
+            newRefundedAmount;
 
-
-        /*
-         * Safety:
-         * Refunds must never exceed amount actually paid.
-         */
-        if (newRefundedAmount >
-            trackedPayment.PaidAmount)
-        {
-            return Result.Failure(
-                PaymentRefundErrors
-                    .AmountExceedsRefundable
-            );
-        }
-
-
-        trackedPayment.RefundedAmount = newRefundedAmount;
-
-        trackedPayment.UpdatedAt = now;
+        trackedPayment.UpdatedAt =
+            now;
 
 
         if (trackedPayment.RefundedAmount >=
@@ -1172,34 +1298,48 @@ public sealed class PaymentService : IPaymentService
                 PaymentStatus.PartiallyRefunded;
         }
 
-        if (trackedPayment.Status ==
-    PaymentStatus.Refunded)
+
+        // ==========================================
+        // Is this Refund related to Cancellation?
+        // ==========================================
+
+        var orderCancellation =
+            await _unitOfWork
+                .OrderCancellations
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.PaymentRefundId ==
+                            trackedRefund.Id
+                        &&
+                        x.Status ==
+                            OrderCancellationStatus
+                                .RefundProcessing
+                );
+
+
+        if (orderCancellation is not null)
         {
-            var cancellation =
-                await _unitOfWork.OrderCancellations
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.PaymentRefundId ==
-                                trackedRefund.Id
-                            &&
-                            x.Status ==
-                                OrderCancellationStatus
-                                    .RefundProcessing
-                    );
-
-
-            if (cancellation is not null)
+            /*
+             * Cancellation refund should refund
+             * the full remaining amount.
+             *
+             * Therefore we only complete cancellation
+             * when Payment itself became Refunded.
+             */
+            if (trackedPayment.Status ==
+                PaymentStatus.Refunded)
             {
                 var trackedCancellation =
                     await _unitOfWork
                         .OrderCancellations
                         .FindAsync(
-                            cancellation.Id
+                            orderCancellation.Id
                         );
 
 
                 var trackedOrder =
-                    await _unitOfWork.Orders
+                    await _unitOfWork
+                        .Orders
                         .FindAsync(
                             trackedPayment.OrderId
                         );
@@ -1213,9 +1353,9 @@ public sealed class PaymentService : IPaymentService
                         trackedOrder.Status;
 
 
-                    // ==============================
-                    // Complete cancellation
-                    // ==============================
+                    // ==================================
+                    // Complete Cancellation
+                    // ==================================
 
                     trackedCancellation.Status =
                         OrderCancellationStatus.Completed;
@@ -1227,6 +1367,10 @@ public sealed class PaymentService : IPaymentService
                         now;
 
 
+                    // ==================================
+                    // Cancel Order
+                    // ==================================
+
                     trackedOrder.Status =
                         OrderStatus.Cancelled;
 
@@ -1236,6 +1380,10 @@ public sealed class PaymentService : IPaymentService
                     trackedOrder.UpdatedAt =
                         now;
 
+
+                    // ==================================
+                    // Order Status History
+                    // ==================================
 
                     await _unitOfWork
                         .OrderStatusHistory
@@ -1264,7 +1412,80 @@ public sealed class PaymentService : IPaymentService
         }
 
 
-        await _unitOfWork.SaveChangeAsync();
+        // ==========================================
+        // Is this Refund related to a Dispute?
+        // ==========================================
+
+        var orderDispute =
+            await _unitOfWork
+                .OrderDisputes
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.PaymentRefundId ==
+                            trackedRefund.Id
+                        &&
+                        x.Status ==
+                            OrderDisputeStatus
+                                .RefundProcessing
+                );
+
+
+        if (orderDispute is not null)
+        {
+            var trackedDispute =
+                await _unitOfWork
+                    .OrderDisputes
+                    .FindAsync(
+                        orderDispute.Id
+                    );
+
+
+            if (trackedDispute is not null)
+            {
+                /*
+                 * Dispute ممكن تكون Partial Refund.
+                 *
+                 * مش شرط Payment كلها تبقى Refunded.
+                 * نجاح الـRefund الموافق عليه كفاية
+                 * إن النزاع نفسه يبقى Resolved.
+                 */
+                trackedDispute.Status =
+                    OrderDisputeStatus.Resolved;
+
+                trackedDispute.ResolvedAt =
+                    now;
+
+                trackedDispute.UpdatedAt =
+                    now;
+            }
+        }
+
+
+        // ==========================================
+        // Save everything
+        // ==========================================
+
+        await _unitOfWork
+     .SaveChangeAsync();
+
+
+        // ==========================================
+        // Sync Vendor Wallet
+        // ==========================================
+
+        var walletResult =
+            await _vendorWalletService
+                .ApplyRefundAsync(
+                    trackedRefund.Id
+                );
+
+
+        if (walletResult.IsFailure)
+        {
+            return Result.Failure(
+                walletResult.Error
+            );
+        }
 
 
         return Result.Success();

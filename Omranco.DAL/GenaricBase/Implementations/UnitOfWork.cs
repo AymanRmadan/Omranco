@@ -221,6 +221,27 @@ namespace Omranco.DAL.GenaricBase.Implementations
 
 
 
+        private IGenaricRepository<VendorPayoutRequest, int>?
+    _vendorPayoutRequests;
+        public IGenaricRepository<VendorPayoutRequest, int>
+            VendorPayoutRequests =>
+                _vendorPayoutRequests ??=
+                    new GenaricRepository<VendorPayoutRequest, int>(
+                        _dbContext
+                    );
+
+
+        private IGenaricRepository<VendorPayoutAccount, int>? _vendorPayoutAccount;
+        public IGenaricRepository<VendorPayoutAccount, int>
+            VendorPayoutAccounts =>
+                _vendorPayoutAccount ??=
+                    new GenaricRepository<VendorPayoutAccount, int>(
+                        _dbContext
+                    );
+
+
+
+
         public Task<int> SaveChangeAsync()
         {
             return _dbContext.SaveChangesAsync();

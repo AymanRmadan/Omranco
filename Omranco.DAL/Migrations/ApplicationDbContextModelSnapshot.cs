@@ -1927,6 +1927,109 @@ namespace Omranco.DAL.Migrations
                     b.ToTable("VendorPayoutAccounts", (string)null);
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorPayoutRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountHolderName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("AccountNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("IBAN")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PayoutMethod")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("ProcessingAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VendorPayoutAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("WalletPhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("WalletProvider")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalReference");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("VendorPayoutAccountId");
+
+                    b.HasIndex("VendorId", "Status");
+
+                    b.ToTable("VendorPayoutRequests", (string)null);
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorStatusHistory", b =>
                 {
                     b.Property<int>("Id")
@@ -2831,6 +2934,32 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("Vendor");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorPayoutRequest", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Omranco.Domain.Entities.Vendors.Vendor", "Vendor")
+                        .WithMany("PayoutRequests")
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Vendors.VendorPayoutAccount", "VendorPayoutAccount")
+                        .WithMany("PayoutRequests")
+                        .HasForeignKey("VendorPayoutAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReviewedByUser");
+
+                    b.Navigation("Vendor");
+
+                    b.Navigation("VendorPayoutAccount");
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorStatusHistory", b =>
                 {
                     b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "ChangedByUser")
@@ -3041,6 +3170,8 @@ namespace Omranco.DAL.Migrations
 
                     b.Navigation("PayoutAccounts");
 
+                    b.Navigation("PayoutRequests");
+
                     b.Navigation("RfqInvitations");
 
                     b.Navigation("ServiceZones");
@@ -3051,6 +3182,11 @@ namespace Omranco.DAL.Migrations
             modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorDocumentRequirement", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Vendors.VendorPayoutAccount", b =>
+                {
+                    b.Navigation("PayoutRequests");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Wallets.VendorWallet", b =>

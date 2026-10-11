@@ -64,6 +64,8 @@ namespace Omranco.DAL.Database
         public DbSet<OrderDispute> OrderDisputes => Set<OrderDispute>();
 
         public DbSet<OrderDisputeAttachment> OrderDisputeAttachments => Set<OrderDisputeAttachment>();
+        public DbSet<VendorPayoutRequest> VendorPayoutRequests => Set<VendorPayoutRequest>();
+
 
 
 

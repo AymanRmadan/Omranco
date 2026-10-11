@@ -63,6 +63,9 @@ namespace Omranco.Domain.Entities.Vendors
     = new List<VendorCategory>();
         public ICollection<RfqInvitation> RfqInvitations { get; set; }
     = new List<RfqInvitation>();
+        public ICollection<VendorPayoutRequest> PayoutRequests { get; set; }
+    = new List<VendorPayoutRequest>();
+
 
     }
 }

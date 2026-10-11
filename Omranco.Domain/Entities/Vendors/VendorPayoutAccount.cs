@@ -30,5 +30,9 @@ namespace Omranco.Domain.Entities.Vendors
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Vendor Vendor { get; set; } = null!;
+        public ICollection<VendorPayoutRequest> PayoutRequests { get; set; }
+    = new List<VendorPayoutRequest>();
+
+
     }
 }

@@ -5,6 +5,7 @@ using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.PaymentServices;
 using Omranco.BLL.Services.Abstractions.RatingServices;
 using Omranco.BLL.Services.Abstractions.RfqServices;
+using Omranco.BLL.Services.Abstractions.VendorServices;
 using Omranco.BLL.Services.Abstractions.WalletServices;
 using Omranco.BLL.Services.Implementations.AuthServices;
 using Omranco.BLL.Services.Implementations.AuthServices.Emails;
@@ -14,6 +15,7 @@ using Omranco.BLL.Services.Implementations.OrderServices;
 using Omranco.BLL.Services.Implementations.PaymentServices;
 using Omranco.BLL.Services.Implementations.RatingServices;
 using Omranco.BLL.Services.Implementations.RfqServices;
+using Omranco.BLL.Services.Implementations.VendorServices;
 using Omranco.BLL.Services.Implementations.WalletServices;
 using Omranco.DAL.Database;
 using Omranco.Domain.Entities.Auths;
@@ -45,6 +47,7 @@ namespace Omranco.BLL
             services.AddScoped<IOrderSettlementService, OrderSettlementService>();
             services.AddScoped<IOrderCancellationService, OrderCancellationService>();
             services.AddScoped<IOrderDisputeService, OrderDisputeService>();
+            services.AddScoped<IVendorPayoutService, VendorPayoutService>();
 
 
 

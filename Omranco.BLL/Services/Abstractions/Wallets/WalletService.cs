@@ -5,5 +5,6 @@ namespace Omranco.BLL.Services.Abstractions.WalletServices
     public interface IVendorWalletService
     {
         Task<Result<int>> CreditOrderEarningAsync(int orderId);
+        Task<Result> ApplyRefundAsync(int paymentRefundId);
     }
 }

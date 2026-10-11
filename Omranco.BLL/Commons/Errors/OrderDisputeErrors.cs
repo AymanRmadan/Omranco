@@ -36,4 +36,32 @@ public static class OrderDisputeErrors
             "A dispute reason is required.",
             400
         );
+
+    public static readonly Error InvalidStatus =
+    new(
+        "OrderDispute.InvalidStatus",
+        "The dispute cannot be updated in its current status.",
+        400
+    );
+
+    public static readonly Error ReviewNotesRequired =
+        new(
+            "OrderDispute.ReviewNotesRequired",
+            "Review notes are required when rejecting a dispute.",
+            400
+        );
+
+    public static readonly Error InvalidRefundAmount =
+    new(
+        "OrderDispute.InvalidRefundAmount",
+        "Approved refund amount must be greater than zero.",
+        400
+    );
+
+    public static readonly Error RefundAmountExceedsAvailable =
+        new(
+            "OrderDispute.RefundAmountExceedsAvailable",
+            "Approved refund amount exceeds the remaining refundable amount.",
+            400
+        );
 }

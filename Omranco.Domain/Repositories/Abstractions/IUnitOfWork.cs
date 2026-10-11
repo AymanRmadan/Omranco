@@ -50,9 +50,12 @@ namespace Omranco.Domain.Repositories.Abstractions
 
         IGenaricRepository<OrderDispute, int> OrderDisputes { get; }
 
-        IGenaricRepository<OrderDisputeAttachment, int>
-            OrderDisputeAttachments
-        { get; }
+        IGenaricRepository<OrderDisputeAttachment, int> OrderDisputeAttachments { get; }
+
+        IGenaricRepository<VendorPayoutRequest, int> VendorPayoutRequests { get; }
+        IGenaricRepository<VendorPayoutAccount, int> VendorPayoutAccounts { get; }
+
+
 
 
         Task<int> SaveChangeAsync();

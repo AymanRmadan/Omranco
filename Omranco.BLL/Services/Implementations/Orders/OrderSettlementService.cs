@@ -23,8 +23,7 @@ public sealed class OrderSettlementService
     }
 
 
-    public async Task<Result> TrySettleAsync(
-        int orderId)
+    public async Task<Result> TrySettleAsync(int orderId)
     {
         // ==========================================
         // Get Order
@@ -92,15 +91,8 @@ public sealed class OrderSettlementService
         // Payment must be Paid
         // ==========================================
 
-        if (payment.Status !=
-            PaymentStatus.Paid)
+        if (payment.Status != PaymentStatus.Paid && payment.Status != PaymentStatus.PartiallyRefunded)
         {
-            /*
-             * برضه مش Error.
-             *
-             * الـOrder اتسلمت لكن لسه
-             * الدفع غير مؤكد.
-             */
             return Result.Success();
         }
 
