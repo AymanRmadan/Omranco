@@ -56,21 +56,24 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
                 $"ORDER:{order.Id}:EARNING";
 
 
-            var alreadyCredited =
+            var existingTransaction =
                 await _unitOfWork
                     .VendorWalletTransactions
-                    .AnyAsync(
+                    .FirstOrDefaultAsync(
                         x =>
                             x.Reference ==
                             reference
                     );
 
+            /*
+                        if (existingTransaction)
+                        {
+                            return Result.Failure<int>(WalletErrors.AlreadyCredited);
+                        }*/
 
-            if (alreadyCredited)
+            if (existingTransaction is not null)
             {
-                return Result.Failure<int>(
-                    WalletErrors.AlreadyCredited
-                );
+                return Result.Success(existingTransaction.Id);
             }
 
 

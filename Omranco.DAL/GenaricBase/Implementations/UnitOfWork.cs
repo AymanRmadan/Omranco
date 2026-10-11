@@ -186,6 +186,39 @@ namespace Omranco.DAL.GenaricBase.Implementations
                         _dbContext
                     );
 
+        private IGenaricRepository<PaymentRefund, int>? _paymentRefunds;
+        public IGenaricRepository<PaymentRefund, int> PaymentRefunds => _paymentRefunds ??=
+            new GenaricRepository<PaymentRefund, int>(_dbContext);
+
+        private IGenaricRepository<OrderCancellation, int>?
+    _orderCancellations;
+
+        public IGenaricRepository<OrderCancellation, int>
+            OrderCancellations =>
+                _orderCancellations ??=
+                    new GenaricRepository<OrderCancellation, int>(
+                        _dbContext);
+
+        private IGenaricRepository<OrderDispute, int>?
+    _orderDisputes;
+
+        private IGenaricRepository<OrderDisputeAttachment, int>?
+            _orderDisputeAttachments;
+
+        public IGenaricRepository<OrderDispute, int> OrderDisputes =>
+                _orderDisputes ??=
+                    new GenaricRepository<OrderDispute, int>(
+                        _dbContext
+                    );
+
+
+        public IGenaricRepository<OrderDisputeAttachment, int>
+            OrderDisputeAttachments =>
+                _orderDisputeAttachments ??=
+                    new GenaricRepository<OrderDisputeAttachment, int>(
+                        _dbContext
+                    );
+
 
 
         public Task<int> SaveChangeAsync()

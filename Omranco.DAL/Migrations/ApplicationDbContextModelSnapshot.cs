@@ -941,6 +941,171 @@ namespace Omranco.DAL.Migrations
                     b.ToTable("Orders", (string)null);
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderCancellation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PaymentRefundId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("PaymentRefundId")
+                        .IsUnique()
+                        .HasFilter("[PaymentRefundId] IS NOT NULL");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.ToTable("OrderCancellations", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderDispute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("ApprovedRefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OpenedByAccountUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PaymentRefundId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpenedByAccountUserId");
+
+                    b.HasIndex("PaymentRefundId")
+                        .IsUnique()
+                        .HasFilter("[PaymentRefundId] IS NOT NULL");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("OrderId", "Status");
+
+                    b.ToTable("OrderDisputes", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderDisputeAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("OrderDisputeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderDisputeId");
+
+                    b.ToTable("OrderDisputeAttachments", (string)null);
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderItem", b =>
                 {
                     b.Property<int>("Id")
@@ -1094,6 +1259,9 @@ namespace Omranco.DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FailureCode")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -1134,18 +1302,98 @@ namespace Omranco.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PaymentId");
+                    b.HasIndex("PaymobIntentionId")
+                        .IsUnique()
+                        .HasFilter("[PaymobIntentionId] IS NOT NULL");
 
-                    b.HasIndex("PaymobIntentionId");
+                    b.HasIndex("PaymobOrderId")
+                        .IsUnique()
+                        .HasFilter("[PaymobOrderId] IS NOT NULL");
 
-                    b.HasIndex("PaymobOrderId");
-
-                    b.HasIndex("PaymobTransactionId");
+                    b.HasIndex("PaymobTransactionId")
+                        .IsUnique()
+                        .HasFilter("[PaymobTransactionId] IS NOT NULL");
 
                     b.HasIndex("Reference")
                         .IsUnique();
 
+                    b.HasIndex("PaymentId", "Status", "ExpiresAt");
+
                     b.ToTable("PaymentAttempts", (string)null);
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Payments.PaymentRefund", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FailureMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("PaymentAttemptId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymobRefundTransactionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RequestedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentAttemptId");
+
+                    b.HasIndex("PaymobRefundTransactionId")
+                        .IsUnique()
+                        .HasFilter("[PaymobRefundTransactionId] IS NOT NULL");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("PaymentId", "Status");
+
+                    b.ToTable("PaymentRefunds", (string)null);
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
@@ -2181,6 +2429,76 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("Vendor");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderCancellation", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithOne("Cancellation")
+                        .HasForeignKey("Omranco.Domain.Entities.Orders.OrderCancellation", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Payments.PaymentRefund", "PaymentRefund")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Orders.OrderCancellation", "PaymentRefundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("PaymentRefund");
+
+                    b.Navigation("RequestedByUser");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderDispute", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.CustomerAccountUser", "OpenedByAccountUser")
+                        .WithMany()
+                        .HasForeignKey("OpenedByAccountUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
+                        .WithMany("Disputes")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Payments.PaymentRefund", "PaymentRefund")
+                        .WithOne()
+                        .HasForeignKey("Omranco.Domain.Entities.Orders.OrderDispute", "PaymentRefundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("OpenedByAccountUser");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("PaymentRefund");
+
+                    b.Navigation("ReviewedByUser");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderDisputeAttachment", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Orders.OrderDispute", "OrderDispute")
+                        .WithMany("Attachments")
+                        .HasForeignKey("OrderDisputeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrderDispute");
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderItem", b =>
                 {
                     b.HasOne("Omranco.Domain.Entities.Orders.Order", "Order")
@@ -2262,6 +2580,32 @@ namespace Omranco.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Payments.PaymentRefund", b =>
+                {
+                    b.HasOne("Omranco.Domain.Entities.Payments.PaymentAttempt", "PaymentAttempt")
+                        .WithMany("Refunds")
+                        .HasForeignKey("PaymentAttemptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Payments.Payment", "Payment")
+                        .WithMany("Refunds")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Omranco.Domain.Entities.Auths.ApplicationUser", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("PaymentAttempt");
+
+                    b.Navigation("RequestedByUser");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>
@@ -2645,6 +2989,10 @@ namespace Omranco.DAL.Migrations
 
             modelBuilder.Entity("Omranco.Domain.Entities.Orders.Order", b =>
                 {
+                    b.Navigation("Cancellation");
+
+                    b.Navigation("Disputes");
+
                     b.Navigation("Items");
 
                     b.Navigation("Payment");
@@ -2652,9 +3000,21 @@ namespace Omranco.DAL.Migrations
                     b.Navigation("StatusHistory");
                 });
 
+            modelBuilder.Entity("Omranco.Domain.Entities.Orders.OrderDispute", b =>
+                {
+                    b.Navigation("Attachments");
+                });
+
             modelBuilder.Entity("Omranco.Domain.Entities.Payments.Payment", b =>
                 {
                     b.Navigation("Attempts");
+
+                    b.Navigation("Refunds");
+                });
+
+            modelBuilder.Entity("Omranco.Domain.Entities.Payments.PaymentAttempt", b =>
+                {
+                    b.Navigation("Refunds");
                 });
 
             modelBuilder.Entity("Omranco.Domain.Entities.Projects.Project", b =>

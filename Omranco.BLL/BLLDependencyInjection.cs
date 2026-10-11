@@ -2,6 +2,7 @@
 using Omranco.BLL.Services.Abstractions.BidServices;
 using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.BLL.Services.Abstractions.OrderServices;
+using Omranco.BLL.Services.Abstractions.PaymentServices;
 using Omranco.BLL.Services.Abstractions.RatingServices;
 using Omranco.BLL.Services.Abstractions.RfqServices;
 using Omranco.BLL.Services.Abstractions.WalletServices;
@@ -10,6 +11,7 @@ using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
 using Omranco.BLL.Services.Implementations.CommissionServices;
 using Omranco.BLL.Services.Implementations.OrderServices;
+using Omranco.BLL.Services.Implementations.PaymentServices;
 using Omranco.BLL.Services.Implementations.RatingServices;
 using Omranco.BLL.Services.Implementations.RfqServices;
 using Omranco.BLL.Services.Implementations.WalletServices;
@@ -38,6 +40,11 @@ namespace Omranco.BLL
             services.AddScoped<IRatingService, RatingService>();
             services.AddScoped<ICommissionService, CommissionService>();
             services.AddScoped<IVendorWalletService, VendorWalletService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IPaymobHmacService, PaymobHmacService>();
+            services.AddScoped<IOrderSettlementService, OrderSettlementService>();
+            services.AddScoped<IOrderCancellationService, OrderCancellationService>();
+            services.AddScoped<IOrderDisputeService, OrderDisputeService>();
 
 
 
@@ -66,6 +73,17 @@ namespace Omranco.BLL
                 .AddOptions<PaymobOptions>()
                 .Bind(configuration.GetSection(PaymobOptions.SectionName))
                 .ValidateDataAnnotations();
+
+
+
+            //======================================== Paymob =============
+            services.AddHttpClient<IPaymobService, PaymobService>((serviceProvider, httpClient) =>
+            {
+                var paymobOptions = serviceProvider.GetRequiredService<IOptions<PaymobOptions>>().Value;
+                httpClient.BaseAddress = new Uri(paymobOptions.BaseUrl);
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+            }
+        );
 
 
             return services;

@@ -44,6 +44,16 @@ namespace Omranco.Domain.Repositories.Abstractions
         IGenaricRepository<Payment, int> Payments { get; }
 
         IGenaricRepository<PaymentAttempt, int> PaymentAttempts { get; }
+        IGenaricRepository<PaymentRefund, int> PaymentRefunds { get; }
+
+        IGenaricRepository<OrderCancellation, int> OrderCancellations { get; }
+
+        IGenaricRepository<OrderDispute, int> OrderDisputes { get; }
+
+        IGenaricRepository<OrderDisputeAttachment, int>
+            OrderDisputeAttachments
+        { get; }
+
 
         Task<int> SaveChangeAsync();
     }

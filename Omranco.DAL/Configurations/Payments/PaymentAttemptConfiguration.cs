@@ -48,11 +48,24 @@ namespace Omranco.DAL.Configurations.Payments
             builder.HasIndex(x => x.Reference)
                 .IsUnique();
 
-            builder.HasIndex(x => x.PaymobIntentionId);
+            builder.HasIndex(x => x.PaymobTransactionId)
+    .IsUnique()
+    .HasFilter("[PaymobTransactionId] IS NOT NULL");
 
-            builder.HasIndex(x => x.PaymobOrderId);
+            builder.HasIndex(x => x.PaymobOrderId)
+                .IsUnique()
+                .HasFilter("[PaymobOrderId] IS NOT NULL");
 
-            builder.HasIndex(x => x.PaymobTransactionId);
+            builder.HasIndex(x => x.PaymobIntentionId)
+                .IsUnique()
+                .HasFilter("[PaymobIntentionId] IS NOT NULL");
+
+            builder.HasIndex(x => new
+            {
+                x.PaymentId,
+                x.Status,
+                x.ExpiresAt
+            });
 
             builder.HasOne(x => x.Payment)
                 .WithMany(x => x.Attempts)

@@ -35,5 +35,7 @@ namespace Omranco.Domain.Entities.Payments
 
         public ICollection<PaymentAttempt> Attempts { get; set; }
             = new List<PaymentAttempt>();
+
+        public ICollection<PaymentRefund> Refunds { get; set; } = new List<PaymentRefund>();
     }
 }

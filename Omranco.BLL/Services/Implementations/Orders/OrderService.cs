@@ -11,11 +11,13 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
     public sealed class OrderService : IOrderService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IOrderSettlementService _orderSettlementService;
 
         public OrderService(
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork, IOrderSettlementService orderSettlementService)
         {
             _unitOfWork = unitOfWork;
+            _orderSettlementService = orderSettlementService;
         }
 
 
@@ -280,11 +282,9 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
                 DateTime.UtcNow;
 
 
-            trackedOrder.Status =
-                newStatus;
+            trackedOrder.Status = newStatus;
 
-            trackedOrder.UpdatedAt =
-                now;
+            trackedOrder.UpdatedAt = now;
 
 
             // ========================================
@@ -347,8 +347,25 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
                 .InsertAsync(history);
 
 
-            await _unitOfWork
-                .SaveChangeAsync();
+            await _unitOfWork.SaveChangeAsync();
+
+
+            if (newStatus == OrderStatus.Delivered)
+            {
+                var settlementResult =
+                    await _orderSettlementService
+                        .TrySettleAsync(
+                            trackedOrder.Id
+                        );
+
+
+                if (settlementResult.IsFailure)
+                {
+                    return Result.Failure(
+                        settlementResult.Error
+                    );
+                }
+            }
 
 
             return Result.Success();

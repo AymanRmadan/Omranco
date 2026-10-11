@@ -70,5 +70,9 @@ namespace Omranco.Domain.Entities.Orders
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
         public Payment? Payment { get; set; }
 
+        public OrderCancellation? Cancellation { get; set; }
+        public ICollection<OrderDispute> Disputes { get; set; }
+    = new List<OrderDispute>();
+
     }
 }

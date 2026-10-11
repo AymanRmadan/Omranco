@@ -41,10 +41,14 @@ namespace Omranco.Domain.Entities.Payments
             = DateTime.UtcNow;
 
         public DateTime? CompletedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
 
         // Navigation Properties
 
         public Payment Payment { get; set; } = null!;
+
+        public ICollection<PaymentRefund> Refunds { get; set; } = new List<PaymentRefund>();
+
     }
 }

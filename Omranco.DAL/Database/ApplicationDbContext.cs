@@ -59,6 +59,12 @@ namespace Omranco.DAL.Database
         public DbSet<VendorWalletTransaction> VendorWalletTransactions => Set<VendorWalletTransaction>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
+        public DbSet<PaymentRefund> PaymentRefunds => Set<PaymentRefund>();
+        public DbSet<OrderCancellation> OrderCancellations => Set<OrderCancellation>();
+        public DbSet<OrderDispute> OrderDisputes => Set<OrderDispute>();
+
+        public DbSet<OrderDisputeAttachment> OrderDisputeAttachments => Set<OrderDisputeAttachment>();
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)
