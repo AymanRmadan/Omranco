@@ -35,6 +35,8 @@ namespace Omranco.DAL.Configurations.Rfqs
                 .WithMany(x => x.RfqInvitations)
                 .HasForeignKey(x => x.VendorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

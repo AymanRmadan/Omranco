@@ -1,6 +1,5 @@
 ﻿namespace Omranco.BLL.Commons.Errors
 {
-
     public static class BidErrors
     {
         public static readonly Error VendorNotFound =
@@ -24,6 +23,13 @@
                 400
             );
 
+        public static readonly Error InvitationCannotBeDeclined =
+            new(
+                "Bid.InvitationCannotBeDeclined",
+                "This RFQ invitation can no longer be declined.",
+                400
+            );
+
         public static readonly Error RfqNotOpen =
             new(
                 "Bid.RfqNotOpen",
@@ -35,7 +41,7 @@
             new(
                 "Bid.DeadlinePassed",
                 "RFQ deadline has passed.",
-                404
+                400
             );
 
         public static readonly Error AlreadySubmitted =
@@ -48,36 +54,57 @@
         public static readonly Error InvalidItems =
             new(
                 "Bid.InvalidItems",
-                "All RFQ items must be priced.",
-                401
+                "All RFQ items must be priced exactly once.",
+                400
             );
 
         public static readonly Error InvalidPrice =
             new(
                 "Bid.InvalidPrice",
-                "Unit price must be greater than zero.",
-                401
+                "Bid prices are invalid.",
+                400
+            );
+
+        public static readonly Error InvalidShippingCostType =
+            new(
+                "Bid.InvalidShippingCostType",
+                "Shipping cost type is invalid.",
+                400
             );
 
         public static readonly Error InvalidValidity =
             new(
                 "Bid.InvalidValidity",
                 "Bid validity date must be in the future.",
-                401
+                400
             );
 
         public static readonly Error AccessDenied =
-    new(
-        "Bid.AccessDenied",
-        "You do not have access to this RFQ.",
-        400
-    );
+            new(
+                "Bid.AccessDenied",
+                "You do not have access to this RFQ.",
+                403
+            );
 
         public static readonly Error NotFound =
             new(
                 "Bid.NotFound",
                 "Bid not found.",
                 404
+            );
+
+        public static readonly Error CannotUpdate =
+            new(
+                "Bid.CannotUpdate",
+                "This bid can no longer be updated.",
+                400
+            );
+
+        public static readonly Error CannotWithdraw =
+            new(
+                "Bid.CannotWithdraw",
+                "This bid can no longer be withdrawn.",
+                400
             );
 
         public static readonly Error CannotAccept =
@@ -102,4 +129,3 @@
             );
     }
 }
-

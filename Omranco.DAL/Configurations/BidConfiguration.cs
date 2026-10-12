@@ -36,12 +36,14 @@ namespace Omranco.DAL.Configurations.Bids
             builder.Property(x => x.Notes)
                 .HasMaxLength(2000);
 
-            builder.HasIndex(x => new
-            {
-                x.RfqId,
-                x.VendorId
-            })
-            .IsUnique();
+            builder.HasIndex(
+        x => new
+        {
+            x.RfqId,
+            x.VendorId
+        }
+    )
+    .IsUnique();
 
             builder.HasOne(x => x.Rfq)
                 .WithMany()

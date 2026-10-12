@@ -305,7 +305,13 @@ namespace Omranco.DAL.GenaricBase.Implementations
 
 
 
-
+        private IGenaricRepository<BidItem, int>? _bidItems;
+        public IGenaricRepository<BidItem, int>
+    BidItems =>
+        _bidItems ??=
+            new GenaricRepository<BidItem, int>(
+                _dbContext
+            );
 
         public Task<int> SaveChangeAsync()
         {

@@ -29,6 +29,7 @@ namespace Omranco.DAL.Configurations.Bids
             })
             .IsUnique();
 
+
             builder.HasOne(x => x.Bid)
                 .WithMany(x => x.Items)
                 .HasForeignKey(x => x.BidId)

@@ -68,6 +68,10 @@ namespace Omranco.Domain.Repositories.Abstractions
         IRfqCategoryRepository RfqCategories { get; }
 
 
+        IGenaricRepository<BidItem, int> BidItems { get; }
+
+
+
 
 
 
