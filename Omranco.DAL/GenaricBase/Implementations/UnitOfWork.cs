@@ -3,6 +3,7 @@ using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Commissions;
+using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
@@ -239,6 +240,35 @@ namespace Omranco.DAL.GenaricBase.Implementations
                         _dbContext
                     );
 
+
+        private IGenaricRepository<CustomerAccount, int>?
+    _customerAccounts;
+
+        private IGenaricRepository<Project, int>?
+            _projects;
+
+        private IGenaricRepository<Zone, int>?
+            _zones;
+
+        public IGenaricRepository<CustomerAccount, int>
+    CustomerAccounts =>
+        _customerAccounts ??=
+            new GenaricRepository<CustomerAccount, int>(
+                _dbContext
+            );
+
+        public IGenaricRepository<Project, int>
+            Projects =>
+                _projects ??=
+                    new GenaricRepository<Project, int>(
+                        _dbContext
+                    );
+
+        public IGenaricRepository<Zone, int>
+            Zones =>
+                _zones ??=
+                    new GenaricRepository<Zone, int>(
+                        _dbContext);
 
 
 

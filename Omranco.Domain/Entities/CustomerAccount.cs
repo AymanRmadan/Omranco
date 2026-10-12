@@ -8,7 +8,7 @@ namespace Omranco.Domain.Entities
 
         public string Name { get; set; } = string.Empty;
 
-        public CustomerAccountType AccountType { get; set; }
+        public CustomerAccountType Type { get; set; }
 
         public bool IsActive { get; set; } = true;
 

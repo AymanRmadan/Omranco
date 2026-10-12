@@ -15,7 +15,7 @@ namespace Omranco.DAL.Configurations.Customers
                 .IsRequired()
                 .HasMaxLength(200);
 
-            builder.Property(x => x.AccountType)
+            builder.Property(x => x.Type)
                 .HasConversion<string>()
                 .HasMaxLength(20)
                 .IsRequired();

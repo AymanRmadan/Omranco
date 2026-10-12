@@ -2,6 +2,7 @@
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
 using Omranco.Domain.Entities.Commissions;
+using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
@@ -54,7 +55,10 @@ namespace Omranco.Domain.Repositories.Abstractions
 
         IGenaricRepository<VendorPayoutRequest, int> VendorPayoutRequests { get; }
         IGenaricRepository<VendorPayoutAccount, int> VendorPayoutAccounts { get; }
+        IGenaricRepository<CustomerAccount, int> CustomerAccounts { get; }
 
+        IGenaricRepository<Project, int> Projects { get; }
+        IGenaricRepository<Zone, int> Zones { get; }
 
 
 

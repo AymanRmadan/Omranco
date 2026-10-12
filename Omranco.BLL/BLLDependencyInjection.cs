@@ -1,8 +1,10 @@
 ﻿using Omranco.BLL.Services.Abstractions.AuthServices;
 using Omranco.BLL.Services.Abstractions.BidServices;
 using Omranco.BLL.Services.Abstractions.CommissionServices;
+using Omranco.BLL.Services.Abstractions.CustomerServices;
 using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.PaymentServices;
+using Omranco.BLL.Services.Abstractions.ProjectServices;
 using Omranco.BLL.Services.Abstractions.RatingServices;
 using Omranco.BLL.Services.Abstractions.RfqServices;
 using Omranco.BLL.Services.Abstractions.VendorServices;
@@ -11,8 +13,10 @@ using Omranco.BLL.Services.Implementations.AuthServices;
 using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
 using Omranco.BLL.Services.Implementations.CommissionServices;
+using Omranco.BLL.Services.Implementations.CustomerServices;
 using Omranco.BLL.Services.Implementations.OrderServices;
 using Omranco.BLL.Services.Implementations.PaymentServices;
+using Omranco.BLL.Services.Implementations.ProjectServices;
 using Omranco.BLL.Services.Implementations.RatingServices;
 using Omranco.BLL.Services.Implementations.RfqServices;
 using Omranco.BLL.Services.Implementations.VendorServices;
@@ -49,6 +53,8 @@ namespace Omranco.BLL
             services.AddScoped<IOrderDisputeService, OrderDisputeService>();
             services.AddScoped<IVendorPayoutService, VendorPayoutService>();
             services.AddScoped<IVendorPayoutAccountService, VendorPayoutAccountService>();
+            services.AddScoped<ICustomerAccountService, CustomerAccountService>();
+            services.AddScoped<IProjectService, ProjectService>();
 
 
             services.AddHttpContextAccessor();
