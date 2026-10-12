@@ -8,7 +8,6 @@ using Omranco.Domain.Entities.Geography;
 using Omranco.Domain.Entities.Orders;
 using Omranco.Domain.Entities.Payments;
 using Omranco.Domain.Entities.Projects;
-using Omranco.Domain.Entities.Ratings;
 using Omranco.Domain.Entities.Rfqs;
 using Omranco.Domain.Entities.Vendors;
 using Omranco.Domain.Entities.Wallets;

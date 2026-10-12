@@ -45,7 +45,7 @@ namespace Omranco.BLL
             services.AddScoped<IRfqInvitationService, RfqInvitationService>();
             services.AddScoped<IBidService, BidService>();
             services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IRatingService, RatingService>();
+            //services.AddScoped<IRatingService, RatingService>();
             services.AddScoped<ICommissionService, CommissionService>();
             services.AddScoped<IVendorWalletService, VendorWalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
@@ -58,6 +58,7 @@ namespace Omranco.BLL
             services.AddScoped<ICustomerAccountService, CustomerAccountService>();
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IRfqCategoryRepository, RfqCategoryRepository>();
+            services.AddScoped<IVendorRatingService, VendorRatingService>();
 
 
             services.AddHttpContextAccessor();

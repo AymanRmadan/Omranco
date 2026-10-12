@@ -20,13 +20,20 @@
             new(
                 "Order.InvalidStatusTransition",
                 "Invalid order status transition.",
-                401
+                400
             );
 
         public static readonly Error VendorNotFound =
             new(
                 "Order.VendorNotFound",
                 "Vendor account not found.",
+                404
+            );
+
+        public static readonly Error CustomerAccountNotFound =
+            new(
+                "Order.CustomerAccountNotFound",
+                "Customer account was not found or is not accessible.",
                 404
             );
     }

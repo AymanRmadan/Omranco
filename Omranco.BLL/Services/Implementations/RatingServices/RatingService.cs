@@ -1,141 +1,124 @@
 ﻿using Omranco.BLL.Commons.Errors;
 using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Ratings.Requests;
+using Omranco.BLL.DTOS.Ratings.Responses;
 using Omranco.BLL.Services.Abstractions.RatingServices;
-using Omranco.Domain.Entities.Ratings;
+using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Entities.Vendors;
 using Omranco.Domain.Enums;
 using Omranco.Domain.Enums.Orders;
 using Omranco.Domain.Repositories.Abstractions;
 
 namespace Omranco.BLL.Services.Implementations.RatingServices
 {
-    public sealed class RatingService : IRatingService
+    public sealed class VendorRatingService
+        : IVendorRatingService
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public RatingService(
+
+        public VendorRatingService(
             IUnitOfWork unitOfWork)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfWork =
+                unitOfWork;
         }
 
 
-        public async Task<Result<int>> RateVendorAsync(
-            int orderId,
-            int currentUserId,
-            SubmitVendorRatingRequest request)
-        {
-            // ========================================
-            // Validate Stars
-            // ========================================
+        // =====================================================
+        // Customer - Create Rating
+        // =====================================================
 
-            if (request.Stars is < 1 or > 5)
+        public async Task<Result<VendorRatingResponse>>
+            CreateAsync(
+                int orderId,
+                int currentUserId,
+                CreateVendorRatingRequest request)
+        {
+            // ==========================================
+            // Validate stars
+            // ==========================================
+
+            if (
+                request.Stars < 1
+                ||
+                request.Stars > 5
+            )
             {
-                return Result.Failure<int>(
-                    RatingErrors.InvalidStars
-                );
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors.InvalidStars
+                    );
             }
 
 
-            // ========================================
-            // Get Order
-            // ========================================
+            // ==========================================
+            // Order
+            // ==========================================
 
             var order =
-                await _unitOfWork.Orders
+                await _unitOfWork
+                    .Orders
                     .FirstOrDefaultAsync(
-                        x => x.Id == orderId,
+                        x =>
+                            x.Id ==
+                            orderId,
+
                         x => x.Project
                     );
 
 
             if (order is null)
             {
-                return Result.Failure<int>(
-                    RatingErrors.OrderNotFound
-                );
-            }
-
-
-            // ========================================
-            // Must be Delivered
-            // ========================================
-
-            if (order.Status !=
-                OrderStatus.Delivered)
-            {
-                return Result.Failure<int>(
-                    RatingErrors.OrderNotDelivered
-                );
-            }
-
-
-            // ========================================
-            // Customer Account User
-            // ========================================
-
-            var accountUser =
-                await _unitOfWork
-                    .CustomerAccountUsers
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.UserId ==
-                                currentUserId
-                            &&
-                            x.CustomerAccountId ==
-                                order.Project
-                                    .CustomerAccountId
-                            &&
-                            x.IsActive
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .OrderNotFound
                     );
+            }
 
 
-            if (accountUser is null)
-            {
-                return Result.Failure<int>(
-                    RatingErrors.AccessDenied
+            // ==========================================
+            // Customer access
+            // ==========================================
+
+            var hasAccess =
+                await HasCustomerAccessAsync(
+                    order,
+                    currentUserId
                 );
-            }
 
 
-            // ========================================
-            // Project Access
-            // ========================================
-
-            var hasProjectAccess =
-                accountUser.Role ==
-                CustomerAccountUserRole.Owner;
-
-
-            if (!hasProjectAccess)
+            if (!hasAccess)
             {
-                hasProjectAccess =
-                    await _unitOfWork
-                        .ProjectMembers
-                        .AnyAsync(
-                            x =>
-                                x.ProjectId ==
-                                    order.ProjectId
-                                &&
-                                x.CustomerAccountUserId ==
-                                    accountUser.Id
-                                &&
-                                x.IsActive
-                        );
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .AccessDenied
+                    );
             }
 
 
-            if (!hasProjectAccess)
+            // ==========================================
+            // Delivered only
+            // ==========================================
+
+            if (
+                order.Status !=
+                OrderStatus.Delivered
+            )
             {
-                return Result.Failure<int>(
-                    RatingErrors.AccessDenied
-                );
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .OrderNotDelivered
+                    );
             }
 
 
-            // ========================================
-            // One Rating Per Order
-            // ========================================
+            // ==========================================
+            // One rating per Order
+            // ==========================================
 
             var alreadyRated =
                 await _unitOfWork
@@ -149,34 +132,39 @@ namespace Omranco.BLL.Services.Implementations.RatingServices
 
             if (alreadyRated)
             {
-                return Result.Failure<int>(
-                    RatingErrors.AlreadyRated
-                );
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .AlreadyRated
+                    );
             }
 
 
-            // ========================================
-            // Vendor
-            // ========================================
+            // ==========================================
+            // Vendor tracked
+            // ==========================================
 
-            var trackedVendor =
-                await _unitOfWork.Vendors
+            var vendor =
+                await _unitOfWork
+                    .Vendors
                     .FindAsync(
                         order.VendorId
                     );
 
 
-            if (trackedVendor is null)
+            if (vendor is null)
             {
-                return Result.Failure<int>(
-                    RatingErrors.VendorNotFound
-                );
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .VendorNotFound
+                    );
             }
 
 
-            // ========================================
-            // Create Rating
-            // ========================================
+            var now =
+                DateTime.UtcNow;
+
 
             var rating =
                 new VendorRating
@@ -187,17 +175,19 @@ namespace Omranco.BLL.Services.Implementations.RatingServices
                     VendorId =
                         order.VendorId,
 
-                    CustomerAccountUserId =
-                        accountUser.Id,
+                    RatedByUserId =
+                        currentUserId,
 
                     Stars =
                         request.Stars,
 
                     Comment =
-                        request.Comment,
+                        Normalize(
+                            request.Comment
+                        ),
 
                     CreatedAt =
-                        DateTime.UtcNow
+                        now
                 };
 
 
@@ -208,47 +198,325 @@ namespace Omranco.BLL.Services.Implementations.RatingServices
                 );
 
 
-            // ========================================
-            // Update Vendor Rating Aggregate
-            // ========================================
+            // ==========================================
+            // Update Vendor Aggregate
+            // ==========================================
 
-            var currentTotal =
-                trackedVendor.RatingAverage *
-                trackedVendor.RatingsCount;
+            var oldRatingsCount =
+                vendor.RatingsCount;
+
+
+            var oldRatingAverage =
+                vendor.RatingAverage;
 
 
             var newRatingsCount =
-                trackedVendor.RatingsCount + 1;
+                oldRatingsCount + 1;
 
 
-            var newAverage =
-                (currentTotal + request.Stars)
-                /
-                newRatingsCount;
-
-
-            trackedVendor.RatingsCount =
-                newRatingsCount;
-
-
-            trackedVendor.RatingAverage =
-                Math.Round(
-                    newAverage,
-                    2
+            var newRatingAverage =
+                decimal.Round(
+                    (
+                        (
+                            oldRatingAverage *
+                            oldRatingsCount
+                        )
+                        +
+                        request.Stars
+                    )
+                    /
+                    newRatingsCount,
+                    2,
+                    MidpointRounding.AwayFromZero
                 );
 
 
-            // ========================================
-            // Save
-            // ========================================
+            vendor.RatingsCount =
+                newRatingsCount;
+
+            vendor.RatingAverage =
+                newRatingAverage;
+
+
+            // ==========================================
+            // One Save
+            // ==========================================
 
             await _unitOfWork
                 .SaveChangeAsync();
 
 
             return Result.Success(
-                rating.Id
+                Map(rating)
             );
+        }
+
+
+        // =====================================================
+        // Customer - Get Order Rating
+        // =====================================================
+
+        public async Task<Result<VendorRatingResponse>>
+            GetOrderRatingAsync(
+                int orderId,
+                int currentUserId)
+        {
+            var order =
+                await _unitOfWork
+                    .Orders
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                            orderId,
+
+                        x => x.Project
+                    );
+
+
+            if (order is null)
+            {
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .OrderNotFound
+                    );
+            }
+
+
+            var hasAccess =
+                await HasCustomerAccessAsync(
+                    order,
+                    currentUserId
+                );
+
+
+            if (!hasAccess)
+            {
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors
+                            .AccessDenied
+                    );
+            }
+
+
+            var rating =
+                await _unitOfWork
+                    .VendorRatings
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.OrderId ==
+                            order.Id
+                    );
+
+
+            if (rating is null)
+            {
+                return Result
+                    .Failure<VendorRatingResponse>(
+                        VendorRatingErrors.RatingNotFound
+                    );
+            }
+
+
+            return Result.Success(
+                Map(rating)
+            );
+        }
+
+
+        // =====================================================
+        // Vendor Ratings
+        // =====================================================
+
+        public async Task<Result<VendorRatingsResponse>>
+            GetVendorRatingsAsync(
+                int vendorId)
+        {
+            var vendor =
+                await _unitOfWork
+                    .Vendors
+                    .GetByIdAsync(
+                        vendorId
+                    );
+
+
+            if (vendor is null)
+            {
+                return Result
+                    .Failure<VendorRatingsResponse>(
+                        VendorRatingErrors
+                            .VendorNotFound
+                    );
+            }
+
+
+            return await BuildVendorRatingsResponseAsync(
+                vendor
+            );
+        }
+
+
+        // =====================================================
+        // Current Vendor Ratings
+        // =====================================================
+
+        public async Task<Result<VendorRatingsResponse>>
+            GetMyVendorRatingsAsync(
+                int currentUserId)
+        {
+            var vendor =
+                await _unitOfWork
+                    .Vendors
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.OwnerUserId ==
+                                currentUserId
+                            &&
+                            x.IsActive
+                    );
+
+
+            if (vendor is null)
+            {
+                return Result
+                    .Failure<VendorRatingsResponse>(
+                        VendorRatingErrors
+                            .VendorNotFound
+                    );
+            }
+
+
+            return await BuildVendorRatingsResponseAsync(
+                vendor
+            );
+        }
+
+
+        // =====================================================
+        // Helpers
+        // =====================================================
+
+        private async Task<bool>
+            HasCustomerAccessAsync(
+                Order order,
+                int currentUserId)
+        {
+            var accountUser =
+                await _unitOfWork
+                    .CustomerAccountUsers
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.CustomerAccountId ==
+                                order.Project
+                                    .CustomerAccountId
+                            &&
+                            x.UserId ==
+                                currentUserId
+                            &&
+                            x.IsActive
+                    );
+
+
+            if (accountUser is null)
+            {
+                return false;
+            }
+
+
+            if (
+                accountUser.Role ==
+                CustomerAccountUserRole.Owner
+            )
+            {
+                return true;
+            }
+
+
+            return await _unitOfWork
+                .ProjectMembers
+                .AnyAsync(
+                    x =>
+                        x.ProjectId ==
+                            order.ProjectId
+                        &&
+                        x.CustomerAccountUserId ==
+                            accountUser.Id
+                        &&
+                        x.IsActive
+                );
+        }
+
+
+        private async Task<Result<VendorRatingsResponse>>
+            BuildVendorRatingsResponseAsync(
+                Vendor vendor)
+        {
+            var ratings =
+                await _unitOfWork
+                    .VendorRatings
+                    .GetAllAsync(
+                        filter:
+                            x =>
+                                x.VendorId ==
+                                vendor.Id,
+
+                        orderBy:
+                            query =>
+                                query.OrderByDescending(
+                                    x => x.CreatedAt
+                                )
+                    );
+
+
+            var response =
+                new VendorRatingsResponse(
+                    vendor.Id,
+                    vendor.RatingAverage,
+                    vendor.RatingsCount,
+
+                    ratings
+                        .Select(
+                            rating =>
+                                new VendorRatingListItemResponse(
+                                    rating.Id,
+                                    rating.OrderId,
+                                    rating.Stars,
+                                    rating.Comment,
+                                    rating.CreatedAt
+                                )
+                        )
+                        .ToList()
+                );
+
+
+            return Result.Success(
+                response
+            );
+        }
+
+
+        private static VendorRatingResponse Map(
+            VendorRating rating)
+        {
+            return new VendorRatingResponse(
+                rating.Id,
+                rating.OrderId,
+                rating.VendorId,
+                rating.Stars,
+                rating.Comment,
+                rating.CreatedAt
+            );
+        }
+
+
+        private static string? Normalize(
+            string? value)
+        {
+            return string.IsNullOrWhiteSpace(
+                value)
+                ? null
+                : value.Trim();
         }
     }
 }

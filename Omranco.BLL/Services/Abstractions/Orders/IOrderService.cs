@@ -6,8 +6,36 @@ namespace Omranco.BLL.Services.Abstractions.OrderServices
 {
     public interface IOrderService
     {
-        Task<Result<VendorOrderDetailsResponse>> GetVendorOrderDetailsAsync(int orderId, int currentUserId);
+        // Vendor
 
-        Task<Result> UpdateStatusAsync(int orderId, int currentUserId, OrderStatus newStatus);
+        Task<Result<List<VendorOrderSummaryResponse>>>
+            GetVendorOrdersAsync(
+                int currentUserId,
+                OrderStatus? status);
+
+        Task<Result<VendorOrderDetailsResponse>>
+            GetVendorOrderDetailsAsync(
+                int orderId,
+                int currentUserId);
+
+        Task<Result>
+            UpdateStatusAsync(
+                int orderId,
+                int currentUserId,
+                OrderStatus newStatus);
+
+
+        // Customer
+
+        Task<Result<List<CustomerOrderSummaryResponse>>>
+            GetCustomerOrdersAsync(
+                int customerAccountId,
+                int currentUserId,
+                OrderStatus? status);
+
+        Task<Result<CustomerOrderDetailsResponse>>
+            GetCustomerOrderDetailsAsync(
+                int orderId,
+                int currentUserId);
     }
 }

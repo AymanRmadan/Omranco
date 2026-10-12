@@ -1,7 +1,7 @@
-﻿using Omranco.Domain.Entities.Orders;
-using Omranco.Domain.Entities.Vendors;
+﻿using Omranco.Domain.Entities.Auths;
+using Omranco.Domain.Entities.Orders;
 
-namespace Omranco.Domain.Entities.Ratings
+namespace Omranco.Domain.Entities.Vendors
 {
     public sealed class VendorRating : BaseEntity<int>
     {
@@ -9,7 +9,7 @@ namespace Omranco.Domain.Entities.Ratings
 
         public int VendorId { get; set; }
 
-        public int CustomerAccountUserId { get; set; }
+        public int RatedByUserId { get; set; }
 
         public int Stars { get; set; }
 
@@ -25,7 +25,6 @@ namespace Omranco.Domain.Entities.Ratings
 
         public Vendor Vendor { get; set; } = null!;
 
-        public CustomerAccountUser CustomerAccountUser { get; set; }
-            = null!;
+        public ApplicationUser RatedByUser { get; set; } = null!;
     }
 }

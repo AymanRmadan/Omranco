@@ -3,6 +3,7 @@ using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Orders.Responses;
 using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.Domain.Entities.Orders;
+using Omranco.Domain.Enums;
 using Omranco.Domain.Enums.Orders;
 using Omranco.Domain.Repositories.Abstractions;
 
@@ -13,26 +14,119 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrderSettlementService _orderSettlementService;
 
+
         public OrderService(
-            IUnitOfWork unitOfWork, IOrderSettlementService orderSettlementService)
+            IUnitOfWork unitOfWork,
+            IOrderSettlementService orderSettlementService)
         {
-            _unitOfWork = unitOfWork;
-            _orderSettlementService = orderSettlementService;
+            _unitOfWork =
+                unitOfWork;
+
+            _orderSettlementService =
+                orderSettlementService;
         }
 
 
-        public async Task<Result<VendorOrderDetailsResponse>> GetVendorOrderDetailsAsync(int orderId, int currentUserId)
-        {
-            // ========================================
-            // Current Vendor
-            // ========================================
+        // =====================================================
+        // Vendor - Orders List
+        // =====================================================
 
+        public async Task<Result<List<VendorOrderSummaryResponse>>>
+            GetVendorOrdersAsync(
+                int currentUserId,
+                OrderStatus? status)
+        {
             var vendor =
-                await _unitOfWork.Vendors
+                await _unitOfWork
+                    .Vendors
                     .FirstOrDefaultAsync(
                         x =>
                             x.OwnerUserId ==
-                                currentUserId &&
+                                currentUserId
+                            &&
+                            x.IsActive
+                    );
+
+
+            if (vendor is null)
+            {
+                return Result
+                    .Failure<List<VendorOrderSummaryResponse>>(
+                        OrderErrors.VendorNotFound
+                    );
+            }
+
+
+            var orders =
+                await _unitOfWork
+                    .Orders
+                    .GetAllAsync(
+                        filter:
+                            x =>
+                                x.VendorId ==
+                                    vendor.Id
+                                &&
+                                (
+                                    !status.HasValue
+                                    ||
+                                    x.Status ==
+                                        status.Value
+                                ),
+
+                        orderBy:
+                            query =>
+                                query.OrderByDescending(
+                                    x => x.CreatedAt
+                                ),
+
+                        includes:
+                        [
+                            x => x.Project
+                        ]
+                    );
+
+
+            var response =
+                orders
+                    .Select(
+                        order =>
+                            new VendorOrderSummaryResponse(
+                                order.Id,
+                                order.Number,
+                                order.ProjectId,
+                                order.Project.Name,
+                                order.Status,
+                                order.TotalAmount,
+                                order.CreatedAt,
+                                order.DeliveredAt
+                            )
+                    )
+                    .ToList();
+
+
+            return Result.Success(
+                response
+            );
+        }
+
+
+        // =====================================================
+        // Vendor - Order Details
+        // =====================================================
+
+        public async Task<Result<VendorOrderDetailsResponse>>
+            GetVendorOrderDetailsAsync(
+                int orderId,
+                int currentUserId)
+        {
+            var vendor =
+                await _unitOfWork
+                    .Vendors
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.OwnerUserId ==
+                                currentUserId
+                            &&
                             x.IsActive
                     );
 
@@ -46,17 +140,16 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
             }
 
 
-            // ========================================
-            // Order
-            // ========================================
-
-
             var order =
-                await _unitOfWork.Orders
+                await _unitOfWork
+                    .Orders
                     .FirstOrDefaultAsync(
                         x =>
-                            x.Id == orderId &&
-                            x.VendorId == vendor.Id,
+                            x.Id ==
+                                orderId
+                            &&
+                            x.VendorId ==
+                                vendor.Id,
 
                         x => x.Project,
                         x => x.Items,
@@ -74,136 +167,94 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
             }
 
 
-            // ========================================
-            // Catalog Data
-            // ========================================
-
-            var productIds =
-                order.Items
-                    .Select(x => x.ProductId)
-                    .Distinct()
-                    .ToList();
+            var catalog =
+                await LoadCatalogDataAsync(
+                    order.Items
+                );
 
 
-            var unitIds =
-                order.Items
-                    .Select(x => x.UnitId)
-                    .Distinct()
-                    .ToList();
+            var response =
+                new VendorOrderDetailsResponse(
+                    order.Id,
+                    order.Number,
+                    order.Status.ToString(),
+                    order.Project.Name,
+                    order.Project.Address,
+                    order.AcceptedByAccountUser
+                        .User.Name,
+                    order.AcceptedByAccountUser
+                        .User.PhoneNumber,
+                    order.Subtotal,
+                    order.ShippingCost,
+                    order.TotalAmount,
+                    order.CreatedAt,
+                    order.DeliveredAt,
 
+                    order.Items
+                        .Select(
+                            item =>
+                                new VendorOrderItemResponse(
+                                    item.ProductId,
 
-            var variantIds =
-                order.Items
-                    .Where(x =>
-                        x.ProductVariantId.HasValue)
-                    .Select(x =>
-                        x.ProductVariantId!.Value)
-                    .Distinct()
-                    .ToList();
+                                    catalog.ProductNames
+                                        .GetValueOrDefault(
+                                            item.ProductId
+                                        )
+                                    ?? string.Empty,
 
+                                    item.ProductVariantId,
 
-            var products =
-                await _unitOfWork.Products
-                    .GetAllAsync(
-                        x => productIds.Contains(x.Id)
-                    );
+                                    item.ProductVariantId
+                                        .HasValue
+                                            ? catalog
+                                                .VariantNames
+                                                .GetValueOrDefault(
+                                                    item
+                                                        .ProductVariantId
+                                                        .Value
+                                                )
+                                            : null,
 
+                                    item.UnitId,
 
-            var units =
-                await _unitOfWork.Units
-                    .GetAllAsync(
-                        x => unitIds.Contains(x.Id)
-                    );
+                                    catalog.UnitNames
+                                        .GetValueOrDefault(
+                                            item.UnitId
+                                        )
+                                    ?? string.Empty,
 
-
-            var variants =
-                variantIds.Count == 0
-                    ? []
-                    : await _unitOfWork
-                        .ProductVariants
-                        .GetAllAsync(
-                            x =>
-                                variantIds.Contains(
-                                    x.Id
+                                    item.Quantity,
+                                    item.UnitPrice,
+                                    item.TotalPrice
                                 )
-                        );
-
-
-            var productLookup =
-                products.ToDictionary(
-                    x => x.Id,
-                    x => x.Name
-                );
-
-
-            var unitLookup =
-                units.ToDictionary(
-                    x => x.Id,
-                    x => x.Name
-                );
-
-
-            var variantLookup =
-                variants.ToDictionary(
-                    x => x.Id,
-                    x => x.Name
-                );
-
-
-            // ========================================
-            // Response
-            // ========================================
-
-
-            var response = new VendorOrderDetailsResponse(
-                order.Id,
-                order.Number,
-                order.Status.ToString(),
-                order.Project.Name,
-                order.Project.Address,
-                order.AcceptedByAccountUser.User.Name,
-                order.AcceptedByAccountUser.User.PhoneNumber,
-                order.Subtotal,
-                order.ShippingCost,
-                order.TotalAmount,
-                order.CreatedAt,
-                order.DeliveredAt,
-                order.Items
-                    .Select(item =>
-                        new VendorOrderItemResponse(
-                            item.ProductId,
-                            productLookup.GetValueOrDefault(item.ProductId)
-                                ?? string.Empty,
-                            item.ProductVariantId,
-                            item.ProductVariantId.HasValue
-                                ? variantLookup.GetValueOrDefault(
-                                    item.ProductVariantId.Value)
-                                : null,
-                            item.UnitId,
-                            unitLookup.GetValueOrDefault(item.UnitId)
-                                ?? string.Empty,
-                            item.Quantity,
-                            item.UnitPrice,
-                            item.TotalPrice
                         )
-                    )
-                    .ToList()
+                        .ToList()
+                );
+
+
+            return Result.Success(
+                response
             );
-
-            return Result.Success(response);
         }
-        public async Task<Result> UpdateStatusAsync(int orderId, int currentUserId, OrderStatus newStatus)
-        {
-            // ========================================
-            // Vendor
-            // ========================================
 
+
+        // =====================================================
+        // Vendor - Update Status
+        // =====================================================
+
+        public async Task<Result> UpdateStatusAsync(
+            int orderId,
+            int currentUserId,
+            OrderStatus newStatus)
+        {
             var vendor =
-                await _unitOfWork.Vendors
+                await _unitOfWork
+                    .Vendors
                     .FirstOrDefaultAsync(
                         x =>
                             x.OwnerUserId ==
-                                currentUserId &&
+                                currentUserId
+                            &&
                             x.IsActive
                     );
 
@@ -216,16 +267,16 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
             }
 
 
-            // ========================================
-            // Order Ownership
-            // ========================================
-
             var order =
-                await _unitOfWork.Orders
+                await _unitOfWork
+                    .Orders
                     .FirstOrDefaultAsync(
                         x =>
-                            x.Id == orderId &&
-                            x.VendorId == vendor.Id
+                            x.Id ==
+                                orderId
+                            &&
+                            x.VendorId ==
+                                vendor.Id
                     );
 
 
@@ -237,34 +288,62 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
             }
 
 
-            // idempotent request
-            if (order.Status == newStatus)
+            // ==========================================
+            // Idempotency
+            // ==========================================
+
+            if (order.Status ==
+                newStatus)
             {
+                /*
+                 * لو Delivered واتكرر الطلب،
+                 * نعمل settlement reconciliation
+                 * بدل ما نرجع فورًا.
+                 */
+                if (newStatus ==
+                    OrderStatus.Delivered)
+                {
+                    var settlementResult =
+                        await _orderSettlementService
+                            .TrySettleAsync(
+                                order.Id
+                            );
+
+
+                    if (settlementResult.IsFailure)
+                    {
+                        return Result.Failure(
+                            settlementResult.Error
+                        );
+                    }
+                }
+
+
                 return Result.Success();
             }
 
 
-            // ========================================
-            // Validate Transition
-            // ========================================
+            // ==========================================
+            // Validate transition
+            // ==========================================
 
             if (!CanVendorTransition(
                     order.Status,
                     newStatus))
             {
                 return Result.Failure(
-                    OrderErrors.InvalidStatusTransition
+                    OrderErrors
+                        .InvalidStatusTransition
                 );
             }
 
 
-            // ========================================
-            // Tracked Order
-            // ========================================
-
             var trackedOrder =
-                await _unitOfWork.Orders
-                    .FindAsync(order.Id);
+                await _unitOfWork
+                    .Orders
+                    .FindAsync(
+                        order.Id
+                    );
 
 
             if (trackedOrder is null)
@@ -278,24 +357,27 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
             var oldStatus =
                 trackedOrder.Status;
 
+
             var now =
                 DateTime.UtcNow;
 
 
-            trackedOrder.Status = newStatus;
+            trackedOrder.Status =
+                newStatus;
 
-            trackedOrder.UpdatedAt = now;
+            trackedOrder.UpdatedAt =
+                now;
 
 
-            // ========================================
-            // Status Timestamps
-            // ========================================
+            // ==========================================
+            // Status timestamps
+            // ==========================================
 
             switch (newStatus)
             {
                 case OrderStatus.InProgress:
 
-                    trackedOrder.InProgressAt =
+                    trackedOrder.InProgressAt ??=
                         now;
 
                     break;
@@ -303,7 +385,7 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
 
                 case OrderStatus.Shipped:
 
-                    trackedOrder.ShippedAt =
+                    trackedOrder.ShippedAt ??=
                         now;
 
                     break;
@@ -311,16 +393,16 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
 
                 case OrderStatus.Delivered:
 
-                    trackedOrder.DeliveredAt =
+                    trackedOrder.DeliveredAt ??=
                         now;
 
                     break;
             }
 
 
-            // ========================================
+            // ==========================================
             // History
-            // ========================================
+            // ==========================================
 
             var history =
                 new OrderStatusHistory
@@ -344,13 +426,21 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
 
             await _unitOfWork
                 .OrderStatusHistory
-                .InsertAsync(history);
+                .InsertAsync(
+                    history
+                );
 
 
-            await _unitOfWork.SaveChangeAsync();
+            await _unitOfWork
+                .SaveChangeAsync();
 
 
-            if (newStatus == OrderStatus.Delivered)
+            // ==========================================
+            // Settlement after Delivery
+            // ==========================================
+
+            if (newStatus ==
+                OrderStatus.Delivered)
             {
                 var settlementResult =
                     await _orderSettlementService
@@ -372,22 +462,497 @@ namespace Omranco.BLL.Services.Implementations.OrderServices
         }
 
 
-        private static bool CanVendorTransition(OrderStatus currentStatus, OrderStatus newStatus)
+        // =====================================================
+        // Customer - Orders List
+        // =====================================================
+
+        public async Task<Result<List<CustomerOrderSummaryResponse>>>
+            GetCustomerOrdersAsync(
+                int customerAccountId,
+                int currentUserId,
+                OrderStatus? status)
+        {
+            var accountUser =
+                await _unitOfWork
+                    .CustomerAccountUsers
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.CustomerAccountId ==
+                                customerAccountId
+                            &&
+                            x.UserId ==
+                                currentUserId
+                            &&
+                            x.IsActive
+                    );
+
+
+            if (accountUser is null)
+            {
+                return Result
+                    .Failure<List<CustomerOrderSummaryResponse>>(
+                        OrderErrors
+                            .CustomerAccountNotFound
+                    );
+            }
+
+
+            List<int> accessibleProjectIds;
+
+
+            // ==========================================
+            // Owner sees all projects
+            // ==========================================
+
+            if (accountUser.Role ==
+                CustomerAccountUserRole.Owner)
+            {
+                var projects =
+                    await _unitOfWork
+                        .Projects
+                        .GetAllAsync(
+                            filter:
+                                x =>
+                                    x.CustomerAccountId ==
+                                    customerAccountId
+                        );
+
+
+                accessibleProjectIds =
+                    projects
+                        .Select(
+                            x => x.Id
+                        )
+                        .ToList();
+            }
+
+
+            // ==========================================
+            // Member sees assigned projects only
+            // ==========================================
+
+            else
+            {
+                var memberships =
+                    await _unitOfWork
+                        .ProjectMembers
+                        .GetAllAsync(
+                            filter:
+                                x =>
+                                    x.CustomerAccountUserId ==
+                                        accountUser.Id
+                                    &&
+                                    x.IsActive
+                        );
+
+
+                accessibleProjectIds =
+                    memberships
+                        .Select(
+                            x => x.ProjectId
+                        )
+                        .Distinct()
+                        .ToList();
+            }
+
+
+            if (accessibleProjectIds.Count == 0)
+            {
+                return Result.Success(
+                    new List<CustomerOrderSummaryResponse>()
+                );
+            }
+
+
+            var orders =
+                await _unitOfWork
+                    .Orders
+                    .GetAllAsync(
+                        filter:
+                            x =>
+                                accessibleProjectIds
+                                    .Contains(
+                                        x.ProjectId
+                                    )
+                                &&
+                                (
+                                    !status.HasValue
+                                    ||
+                                    x.Status ==
+                                        status.Value
+                                ),
+
+                        orderBy:
+                            query =>
+                                query.OrderByDescending(
+                                    x => x.CreatedAt
+                                ),
+
+                        includes:
+                        [
+                            x => x.Project,
+                            x => x.Vendor
+                        ]
+                    );
+
+
+            var response =
+                orders
+                    .Select(
+                        order =>
+                            new CustomerOrderSummaryResponse(
+                                order.Id,
+                                order.Number,
+                                order.ProjectId,
+                                order.Project.Name,
+                                order.VendorId,
+                                order.Vendor.BusinessName,
+                                order.Status,
+                                order.TotalAmount,
+                                order.CreatedAt,
+                                order.DeliveredAt
+                            )
+                    )
+                    .ToList();
+
+
+            return Result.Success(
+                response
+            );
+        }
+
+
+        // =====================================================
+        // Customer - Order Details
+        // =====================================================
+
+        public async Task<Result<CustomerOrderDetailsResponse>>
+            GetCustomerOrderDetailsAsync(
+                int orderId,
+                int currentUserId)
+        {
+            var order =
+                await _unitOfWork
+                    .Orders
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                            orderId,
+
+                        x => x.Project,
+                        x => x.Vendor,
+                        x => x.Items,
+                        x => x.StatusHistory,
+                        x => x.Payment
+                    );
+
+
+            if (order is null)
+            {
+                return Result
+                    .Failure<CustomerOrderDetailsResponse>(
+                        OrderErrors.NotFound
+                    );
+            }
+
+
+            var hasAccess =
+                await HasCustomerAccessAsync(
+                    order.ProjectId,
+                    order.Project.CustomerAccountId,
+                    currentUserId
+                );
+
+
+            if (!hasAccess)
+            {
+                return Result
+                    .Failure<CustomerOrderDetailsResponse>(
+                        OrderErrors.AccessDenied
+                    );
+            }
+
+
+            var catalog =
+                await LoadCatalogDataAsync(
+                    order.Items
+                );
+
+
+            var response =
+                new CustomerOrderDetailsResponse(
+                    order.Id,
+                    order.Number,
+                    order.RfqId,
+                    order.BidId,
+                    order.ProjectId,
+                    order.Project.Name,
+                    order.Project.Address,
+                    order.VendorId,
+                    order.Vendor.BusinessName,
+                    order.Status,
+                    order.Payment?.Status,
+                    order.Subtotal,
+                    order.ShippingCost,
+                    order.TotalAmount,
+                    order.CreatedAt,
+                    order.InProgressAt,
+                    order.ShippedAt,
+                    order.DeliveredAt,
+                    order.CancelledAt,
+
+                    order.Items
+                        .Select(
+                            item =>
+                                new CustomerOrderItemResponse(
+                                    item.ProductId,
+
+                                    catalog.ProductNames
+                                        .GetValueOrDefault(
+                                            item.ProductId
+                                        )
+                                    ?? string.Empty,
+
+                                    item.ProductVariantId,
+
+                                    item.ProductVariantId
+                                        .HasValue
+                                            ? catalog
+                                                .VariantNames
+                                                .GetValueOrDefault(
+                                                    item
+                                                        .ProductVariantId
+                                                        .Value
+                                                )
+                                            : null,
+
+                                    item.UnitId,
+
+                                    catalog.UnitNames
+                                        .GetValueOrDefault(
+                                            item.UnitId
+                                        )
+                                    ?? string.Empty,
+
+                                    item.Quantity,
+                                    item.UnitPrice,
+                                    item.TotalPrice
+                                )
+                        )
+                        .ToList(),
+
+                    order.StatusHistory
+                        .OrderBy(
+                            x => x.ChangedAt
+                        )
+                        .Select(
+                            history =>
+                                new OrderStatusHistoryResponse(
+                                    history.Id,
+                                    history.OldStatus,
+                                    history.NewStatus,
+                                    history.ChangedByUserId,
+                                    history.ChangedAt
+                                )
+                        )
+                        .ToList()
+                );
+
+
+            return Result.Success(
+                response
+            );
+        }
+
+
+        // =====================================================
+        // Helpers
+        // =====================================================
+
+        private async Task<bool>
+            HasCustomerAccessAsync(
+                int projectId,
+                int customerAccountId,
+                int currentUserId)
+        {
+            var accountUser =
+                await _unitOfWork
+                    .CustomerAccountUsers
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.CustomerAccountId ==
+                                customerAccountId
+                            &&
+                            x.UserId ==
+                                currentUserId
+                            &&
+                            x.IsActive
+                    );
+
+
+            if (accountUser is null)
+            {
+                return false;
+            }
+
+
+            if (accountUser.Role ==
+                CustomerAccountUserRole.Owner)
+            {
+                return true;
+            }
+
+
+            return await _unitOfWork
+                .ProjectMembers
+                .AnyAsync(
+                    x =>
+                        x.ProjectId ==
+                            projectId
+                        &&
+                        x.CustomerAccountUserId ==
+                            accountUser.Id
+                        &&
+                        x.IsActive
+                );
+        }
+
+
+        private async Task<CatalogLookupData>
+            LoadCatalogDataAsync(
+                IEnumerable<OrderItem> items)
+        {
+            var itemList =
+                items.ToList();
+
+
+            var productIds =
+                itemList
+                    .Select(
+                        x => x.ProductId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var unitIds =
+                itemList
+                    .Select(
+                        x => x.UnitId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var variantIds =
+                itemList
+                    .Where(
+                        x =>
+                            x.ProductVariantId
+                                .HasValue
+                    )
+                    .Select(
+                        x =>
+                            x.ProductVariantId!
+                                .Value
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var products =
+                productIds.Count == 0
+                    ? []
+                    : await _unitOfWork
+                        .Products
+                        .GetAllAsync(
+                            x =>
+                                productIds.Contains(
+                                    x.Id
+                                )
+                        );
+
+
+            var units =
+                unitIds.Count == 0
+                    ? []
+                    : await _unitOfWork
+                        .Units
+                        .GetAllAsync(
+                            x =>
+                                unitIds.Contains(
+                                    x.Id
+                                )
+                        );
+
+
+            var variants =
+                variantIds.Count == 0
+                    ? []
+                    : await _unitOfWork
+                        .ProductVariants
+                        .GetAllAsync(
+                            x =>
+                                variantIds.Contains(
+                                    x.Id
+                                )
+                        );
+
+
+            return new CatalogLookupData(
+                products.ToDictionary(
+                    x => x.Id,
+                    x => x.Name
+                ),
+
+                units.ToDictionary(
+                    x => x.Id,
+                    x => x.Name
+                ),
+
+                variants.ToDictionary(
+                    x => x.Id,
+                    x => x.Name
+                )
+            );
+        }
+
+
+        private static bool CanVendorTransition(
+            OrderStatus currentStatus,
+            OrderStatus newStatus)
         {
             return
-                currentStatus == OrderStatus.Confirmed &&
-                newStatus == OrderStatus.InProgress
-
+                (
+                    currentStatus ==
+                        OrderStatus.Confirmed
+                    &&
+                    newStatus ==
+                        OrderStatus.InProgress
+                )
                 ||
-
-                currentStatus == OrderStatus.InProgress &&
-                newStatus == OrderStatus.Shipped
-
+                (
+                    currentStatus ==
+                        OrderStatus.InProgress
+                    &&
+                    newStatus ==
+                        OrderStatus.Shipped
+                )
                 ||
-
-                currentStatus == OrderStatus.Shipped &&
-                newStatus == OrderStatus.Delivered;
+                (
+                    currentStatus ==
+                        OrderStatus.Shipped
+                    &&
+                    newStatus ==
+                        OrderStatus.Delivered
+                );
         }
+
+
+        private sealed record CatalogLookupData(
+            Dictionary<int, string> ProductNames,
+            Dictionary<int, string> UnitNames,
+            Dictionary<int, string> VariantNames
+        );
     }
 }
-

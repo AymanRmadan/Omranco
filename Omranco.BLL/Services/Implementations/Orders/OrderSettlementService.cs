@@ -14,92 +14,82 @@ public sealed class OrderSettlementService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IVendorWalletService _vendorWalletService;
 
+
     public OrderSettlementService(
         IUnitOfWork unitOfWork,
         IVendorWalletService vendorWalletService)
     {
-        _unitOfWork = unitOfWork;
-        _vendorWalletService = vendorWalletService;
+        _unitOfWork =
+            unitOfWork;
+
+        _vendorWalletService =
+            vendorWalletService;
     }
 
 
-    public async Task<Result> TrySettleAsync(int orderId)
+    public async Task<Result> TrySettleAsync(
+        int orderId)
     {
-        // ==========================================
-        // Get Order
-        // ==========================================
-
         var order =
-            await _unitOfWork.Orders
-                .GetByIdAsync(orderId);
+            await _unitOfWork
+                .Orders
+                .GetByIdAsync(
+                    orderId
+                );
 
 
         if (order is null)
         {
-            /*
-             * استخدم OrderErrors.NotFound
-             * الموجود عندك لو بالفعل عاملينه.
-             */
             return Result.Failure(
                 OrderErrors.NotFound
             );
         }
 
 
-        // ==========================================
-        // Order must be Delivered
-        // ==========================================
-
+        /*
+         * Settlement only happens after delivery.
+         */
         if (order.Status !=
             OrderStatus.Delivered)
         {
-            /*
-             * مش Error.
-             *
-             * معناها ببساطة إننا لسه
-             * مستنيين التسليم.
-             */
             return Result.Success();
         }
 
 
-        // ==========================================
-        // Payment
-        // ==========================================
-
         var payment =
-            await _unitOfWork.Payments
+            await _unitOfWork
+                .Payments
                 .FirstOrDefaultAsync(
-                    x => x.OrderId == orderId
+                    x =>
+                        x.OrderId ==
+                        orderId
                 );
 
 
         if (payment is null)
         {
-            /*
-             * المفروض كل Order عندنا يكون
-             * له Payment، لكن لو لسبب ما
-             * مش موجودة فدي مشكلة حقيقية.
-             */
             return Result.Failure(
                 PaymentErrors.NotFound
             );
         }
 
 
-        // ==========================================
-        // Payment must be Paid
-        // ==========================================
-
-        if (payment.Status != PaymentStatus.Paid && payment.Status != PaymentStatus.PartiallyRefunded)
+        /*
+         * Partial refund is still eligible.
+         * CreditOrderEarningAsync calculates
+         * the adjusted vendor earning.
+         */
+        if (
+            payment.Status !=
+                PaymentStatus.Paid
+            &&
+            payment.Status !=
+                PaymentStatus.PartiallyRefunded
+        )
         {
             return Result.Success();
         }
 
-
-        // ==========================================
-        // Credit Vendor
-        // ==========================================
 
         var walletResult =
             await _vendorWalletService
