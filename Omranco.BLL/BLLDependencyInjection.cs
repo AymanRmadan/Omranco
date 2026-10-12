@@ -59,6 +59,9 @@ namespace Omranco.BLL
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IRfqCategoryRepository, RfqCategoryRepository>();
             services.AddScoped<IVendorRatingService, VendorRatingService>();
+            services.AddScoped<IVendorService, VendorService>();
+
+
 
 
             services.AddHttpContextAccessor();

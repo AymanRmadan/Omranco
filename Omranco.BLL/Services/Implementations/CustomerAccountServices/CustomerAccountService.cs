@@ -24,9 +24,7 @@ public sealed class CustomerAccountService
     }
 
 
-    public async Task<Result<CustomerAccountResponse>> CreateAsync(
-        int currentUserId,
-        CreateCustomerAccountRequest request)
+    public async Task<Result<CustomerAccountResponse>> CreateAsync(int currentUserId, CreateCustomerAccountRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {

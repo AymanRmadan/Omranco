@@ -70,6 +70,22 @@ namespace Omranco.Domain.Repositories.Abstractions
 
         IGenaricRepository<BidItem, int> BidItems { get; }
 
+        //==================
+
+        IGenaricRepository<VendorCategory, int> VendorCategories { get; }
+
+        IGenaricRepository<VendorZone, int> VendorZones { get; }
+
+        IGenaricRepository<VendorDocument, int> VendorDocuments { get; }
+
+        IGenaricRepository<VendorDocumentRequirement, int> VendorDocumentRequirements { get; }
+
+        IGenaricRepository<Governorate, int> Governorates { get; }
+
+        IGenaricRepository<VendorStatusHistory, int> VendorStatusHistorys { get; }
+
+
+
 
 
 

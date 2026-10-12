@@ -318,6 +318,39 @@ namespace Omranco.DAL.GenaricBase.Implementations
         }
 
 
+        //===========
+
+        private IGenaricRepository<VendorDocument, int>? _vendorDocuments;
+        public IGenaricRepository<VendorDocument, int> VendorDocuments => _vendorDocuments ??=
+                    new GenaricRepository<VendorDocument, int>(_dbContext);
+
+
+        private IGenaricRepository<VendorCategory, int>? _vendorCategories;
+        public IGenaricRepository<VendorCategory, int> VendorCategories => _vendorCategories ??=
+                    new GenaricRepository<VendorCategory, int>(_dbContext);
+
+
+        private IGenaricRepository<VendorZone, int>? _vendorZones;
+        public IGenaricRepository<VendorZone, int> VendorZones => _vendorZones ??=
+                    new GenaricRepository<VendorZone, int>(_dbContext);
+
+        private IGenaricRepository<Governorate, int>? _governorates;
+        public IGenaricRepository<Governorate, int> Governorates => _governorates ??=
+                    new GenaricRepository<Governorate, int>(_dbContext);
+
+
+        private IGenaricRepository<VendorStatusHistory, int>? _vendorStatusHistory;
+        public IGenaricRepository<VendorStatusHistory, int> VendorStatusHistorys => _vendorStatusHistory ??=
+                   new GenaricRepository<VendorStatusHistory, int>(_dbContext);
+
+
+
+        private IGenaricRepository<VendorDocumentRequirement, int>? _vendorDocumentRequirements;
+        public IGenaricRepository<VendorDocumentRequirement, int> VendorDocumentRequirements => _vendorDocumentRequirements ??=
+                    new GenaricRepository<VendorDocumentRequirement, int>(_dbContext);
+
+
+
         public void Dispose()
         {
             _dbContext.Dispose();
