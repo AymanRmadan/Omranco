@@ -1,4 +1,6 @@
 ﻿using Microsoft.OpenApi.Models;
+using Omranco.BLL.Services.Abstractions.FileServices;
+using Omranco.PL.Services;
 
 namespace Omranco.PL
 {
@@ -7,6 +9,8 @@ namespace Omranco.PL
         public static IServiceCollection AddPL(this IServiceCollection services, IConfiguration config)
         {
             services.AddSwaggerConfig();
+
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
             return services;
         }

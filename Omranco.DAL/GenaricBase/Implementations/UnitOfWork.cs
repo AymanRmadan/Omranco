@@ -1,4 +1,5 @@
 ﻿using Omranco.DAL.Database;
+using Omranco.DAL.Repositories.Implementations;
 using Omranco.Domain.Entities;
 using Omranco.Domain.Entities.Bids;
 using Omranco.Domain.Entities.Catalog;
@@ -269,6 +270,40 @@ namespace Omranco.DAL.GenaricBase.Implementations
                 _zones ??=
                     new GenaricRepository<Zone, int>(
                         _dbContext);
+
+
+
+
+        private IGenaricRepository<RfqItem, int>? _rfqItems;
+
+        private IGenaricRepository<RfqAttachment, int>? _rfqAttachments;
+
+        private IRfqCategoryRepository? _rfqCategories;
+
+        public IGenaricRepository<RfqItem, int>
+    RfqItems =>
+        _rfqItems ??=
+            new GenaricRepository<RfqItem, int>(
+                _dbContext
+            );
+
+
+        public IGenaricRepository<RfqAttachment, int>
+            RfqAttachments =>
+                _rfqAttachments ??=
+                    new GenaricRepository<RfqAttachment, int>(
+                        _dbContext
+                    );
+
+
+        public IRfqCategoryRepository
+            RfqCategories =>
+                _rfqCategories ??=
+                    new RfqCategoryRepository(
+                        _dbContext
+                    );
+
+
 
 
 

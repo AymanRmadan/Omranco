@@ -60,6 +60,17 @@ namespace Omranco.Domain.Repositories.Abstractions
         IGenaricRepository<Project, int> Projects { get; }
         IGenaricRepository<Zone, int> Zones { get; }
 
+        IGenaricRepository<RfqItem, int> RfqItems { get; }
+
+        IGenaricRepository<RfqAttachment, int> RfqAttachments { get; }
+
+
+        IRfqCategoryRepository RfqCategories { get; }
+
+
+
+
+
 
 
         Task<int> SaveChangeAsync();

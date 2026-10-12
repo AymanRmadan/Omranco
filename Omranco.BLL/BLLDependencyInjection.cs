@@ -22,7 +22,9 @@ using Omranco.BLL.Services.Implementations.RfqServices;
 using Omranco.BLL.Services.Implementations.VendorServices;
 using Omranco.BLL.Services.Implementations.WalletServices;
 using Omranco.DAL.Database;
+using Omranco.DAL.Repositories.Implementations;
 using Omranco.Domain.Entities.Auths;
+using Omranco.Domain.Repositories.Abstractions;
 
 namespace Omranco.BLL
 {
@@ -55,6 +57,7 @@ namespace Omranco.BLL
             services.AddScoped<IVendorPayoutAccountService, VendorPayoutAccountService>();
             services.AddScoped<ICustomerAccountService, CustomerAccountService>();
             services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<IRfqCategoryRepository, RfqCategoryRepository>();
 
 
             services.AddHttpContextAccessor();
