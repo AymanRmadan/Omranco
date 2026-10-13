@@ -2,6 +2,7 @@
 using Omranco.BLL.Services.Abstractions.BidServices;
 using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.BLL.Services.Abstractions.CustomerServices;
+using Omranco.BLL.Services.Abstractions.GeographyServices;
 using Omranco.BLL.Services.Abstractions.OrderServices;
 using Omranco.BLL.Services.Abstractions.PaymentServices;
 using Omranco.BLL.Services.Abstractions.ProjectServices;
@@ -14,6 +15,7 @@ using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
 using Omranco.BLL.Services.Implementations.CommissionServices;
 using Omranco.BLL.Services.Implementations.CustomerServices;
+using Omranco.BLL.Services.Implementations.GeographyServices;
 using Omranco.BLL.Services.Implementations.OrderServices;
 using Omranco.BLL.Services.Implementations.PaymentServices;
 using Omranco.BLL.Services.Implementations.ProjectServices;
@@ -60,6 +62,7 @@ namespace Omranco.BLL
             services.AddScoped<IRfqCategoryRepository, RfqCategoryRepository>();
             services.AddScoped<IVendorRatingService, VendorRatingService>();
             services.AddScoped<IVendorService, VendorService>();
+            services.AddScoped<IGeographyService, GeographyService>();
 
 
 
