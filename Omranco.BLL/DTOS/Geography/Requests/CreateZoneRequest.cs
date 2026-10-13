@@ -4,4 +4,4 @@ public sealed record CreateZoneRequest(
     int GovernorateId,
     string NameAr,
     string? NameEn
-)
+);
