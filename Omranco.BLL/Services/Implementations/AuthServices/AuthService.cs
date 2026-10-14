@@ -63,6 +63,7 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
 
                 await _userManager.UpdateAsync(user);
                 var response = new AuthResponse(user.Id.ToString(), user.Email, user.Name, token, expiresIn * 60, refreshToken, refreshTokenExpiration);
+
                 return Result.Success(response);
             }
 
@@ -88,26 +89,44 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
                 Email = request.Email,
                 Name = request.Name,
                 UserName = request.Email,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
 
             var result = await _userManager.CreateAsync(user, request.Password);
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, DefaultRoles.Owner);
+                var roleResult =
+                    await _userManager
+                        .AddToRoleAsync(
+                            user,
+                            DefaultRoles.Owner
+                        );
+
+
+                if (!roleResult.Succeeded)
+                {
+                    var roleError =
+                        roleResult.Errors.First();
+
+
+                    return Result.Failure(new Error(roleError.Code, roleError.Description, StatusCodes.Status400BadRequest)
+                    );
+                }
+
 
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
+
                 _logger.LogInformation("Confirmation code : {code}", code);
+
+
                 await SendConfirmationEmail(user, code);
 
-                return Result.Success();
             }
-
-            var error = result.Errors.First();
-            return Result.Failure<AuthResponse>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+            return Result.Success();
         }
 
         public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request)
@@ -133,7 +152,6 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
 
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, DefaultRoles.Owner);
                 return Result.Success();
             }
 
@@ -201,8 +219,7 @@ namespace Omranco.BLL.Services.Implementations.AuthServices
             await _userManager.UpdateAsync(user);
 
             var response = new AuthResponse(user.Id.ToString(), user.Email, user.Name
-                                 , newToken, expireIn * 60
-                                 , newRefreshToken, refreshTokenExpiration);
+                                 , newToken, expireIn, newRefreshToken, refreshTokenExpiration);
 
             return Result.Success(response);
         }

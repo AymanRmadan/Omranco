@@ -350,6 +350,25 @@ namespace Omranco.DAL.GenaricBase.Implementations
                     new GenaricRepository<VendorDocumentRequirement, int>(_dbContext);
 
 
+        private IGenaricRepository<ProductUnit, int>? _productUnits;
+        public IGenaricRepository<ProductUnit, int> ProductUnits => _productUnits ??=
+                    new GenaricRepository<ProductUnit, int>(_dbContext);
+
+
+        private IGenaricRepository<ProductAttribute, int>? _productAttributes;
+        public IGenaricRepository<ProductAttribute, int> ProductAttributes => _productAttributes ??=
+                    new GenaricRepository<ProductAttribute, int>(_dbContext);
+
+
+        private IGenaricRepository<ProductAttributeOption, int>? _productAttributeOptions;
+        public IGenaricRepository<ProductAttributeOption, int> ProductAttributeOptions => _productAttributeOptions ??=
+                    new GenaricRepository<ProductAttributeOption, int>(_dbContext);
+
+
+        private IGenaricRepository<ProductVariantValue, int>? _productVariantValues;
+        public IGenaricRepository<ProductVariantValue, int> ProductVariantValues => _productVariantValues ??=
+                    new GenaricRepository<ProductVariantValue, int>(_dbContext);
+
 
         public void Dispose()
         {

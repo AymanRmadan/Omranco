@@ -27,6 +27,8 @@ namespace Omranco.DAL.Configurations.Catalog
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.UnitId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

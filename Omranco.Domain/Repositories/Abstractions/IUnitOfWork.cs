@@ -84,6 +84,19 @@ namespace Omranco.Domain.Repositories.Abstractions
 
         IGenaricRepository<VendorStatusHistory, int> VendorStatusHistorys { get; }
 
+        //===========================================
+
+        IGenaricRepository<ProductUnit, int> ProductUnits { get; }
+
+        IGenaricRepository<ProductAttribute, int> ProductAttributes { get; }
+
+        IGenaricRepository<ProductAttributeOption, int> ProductAttributeOptions { get; }
+
+        IGenaricRepository<ProductVariantValue, int> ProductVariantValues
+        { get; }
+
+
+
 
 
 

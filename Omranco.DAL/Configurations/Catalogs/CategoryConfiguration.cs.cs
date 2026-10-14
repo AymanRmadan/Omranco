@@ -37,6 +37,8 @@ namespace Omranco.DAL.Configurations.Catalog
                 x.ParentId,
                 x.Name
             });
+
+
         }
     }
 }

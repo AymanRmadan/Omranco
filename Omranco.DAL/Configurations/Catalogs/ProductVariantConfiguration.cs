@@ -25,12 +25,12 @@ namespace Omranco.DAL.Configurations.Catalog
 
             builder.HasIndex(x => x.ProductId);
 
-            builder.HasIndex(x => x.Sku);
-
             builder.HasOne(x => x.Product)
                 .WithMany(x => x.Variants)
                 .HasForeignKey(x => x.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(x => x.Sku).IsUnique().HasFilter("[Sku] IS NOT NULL");
         }
     }
 }

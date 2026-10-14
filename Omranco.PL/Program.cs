@@ -1,7 +1,6 @@
-
-
 using Omranco.BLL;
 using Omranco.DAL;
+using Omranco.DAL.Database.Seeders;
 using Omranco.PL;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +13,11 @@ builder.Services.AddPL(builder.Configuration);
 
 
 var app = builder.Build();
+
+//Add Seeders
+await IdentitySeeder.SeedAsync(app.Services, builder.Configuration);
+
+
 app.UseExceptionHandler();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

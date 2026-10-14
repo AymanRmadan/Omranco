@@ -15,6 +15,14 @@ namespace Omranco.DAL.Configurations.Catalog
                 x.ProductAttributeId
             });
 
+            builder.HasIndex(
+    x => new
+    {
+        x.ProductVariantId,
+        x.ProductAttributeId
+    })
+    .IsUnique();
+
             builder.HasOne(x => x.ProductVariant)
                 .WithMany(x => x.Values)
                 .HasForeignKey(x => x.ProductVariantId)
@@ -29,6 +37,8 @@ namespace Omranco.DAL.Configurations.Catalog
                 .WithMany()
                 .HasForeignKey(x => x.ProductAttributeOptionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

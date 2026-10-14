@@ -1,5 +1,7 @@
-﻿using Omranco.BLL.Services.Abstractions.AuthServices;
+﻿using Omranco.BLL.Authorization;
+using Omranco.BLL.Services.Abstractions.AuthServices;
 using Omranco.BLL.Services.Abstractions.BidServices;
+using Omranco.BLL.Services.Abstractions.CatalogServices;
 using Omranco.BLL.Services.Abstractions.CommissionServices;
 using Omranco.BLL.Services.Abstractions.CustomerServices;
 using Omranco.BLL.Services.Abstractions.GeographyServices;
@@ -13,6 +15,7 @@ using Omranco.BLL.Services.Abstractions.WalletServices;
 using Omranco.BLL.Services.Implementations.AuthServices;
 using Omranco.BLL.Services.Implementations.AuthServices.Emails;
 using Omranco.BLL.Services.Implementations.BidServices;
+using Omranco.BLL.Services.Implementations.CatalogServices;
 using Omranco.BLL.Services.Implementations.CommissionServices;
 using Omranco.BLL.Services.Implementations.CustomerServices;
 using Omranco.BLL.Services.Implementations.GeographyServices;
@@ -25,6 +28,7 @@ using Omranco.BLL.Services.Implementations.VendorServices;
 using Omranco.BLL.Services.Implementations.WalletServices;
 using Omranco.DAL.Database;
 using Omranco.DAL.Repositories.Implementations;
+using Omranco.Domain;
 using Omranco.Domain.Entities.Auths;
 using Omranco.Domain.Repositories.Abstractions;
 
@@ -63,6 +67,7 @@ namespace Omranco.BLL
             services.AddScoped<IVendorRatingService, VendorRatingService>();
             services.AddScoped<IVendorService, VendorService>();
             services.AddScoped<IGeographyService, GeographyService>();
+            services.AddScoped<ICatalogService, CatalogService>();
 
 
 
@@ -85,8 +90,8 @@ namespace Omranco.BLL
                  .ValidateOnStart();
 
 
-            services.Configure<JwtOptions>(
-                configuration.GetSection("Jwt"));
+            //services.Configure<JwtOptions>(
+            //    configuration.GetSection("Jwt"));
 
             services
                 .AddOptions<PaymobOptions>()
@@ -131,24 +136,75 @@ namespace Omranco.BLL
 
             services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme =
+                    JwtBearerDefaults.AuthenticationScheme;
+
+                options.DefaultChallengeScheme =
+                    JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(o =>
+ .AddJwtBearer(o =>
+ {
+     o.SaveToken = true;
+
+     o.MapInboundClaims = false;
+
+     o.TokenValidationParameters =
+         new TokenValidationParameters
+         {
+             ValidateIssuerSigningKey =
+                 true,
+
+             ValidateIssuer =
+                 true,
+
+             ValidIssuer =
+                 jwtSetting?.Issuer,
+
+             ValidateAudience =
+                 true,
+
+             ValidAudience =
+                 jwtSetting?.Audience,
+
+             ValidateLifetime =
+                 true,
+
+             IssuerSigningKey =
+                 new SymmetricSecurityKey(
+                     Encoding.UTF8.GetBytes(
+                         jwtSetting?.Key!
+                     )
+                 ),
+
+             RoleClaimType =
+                 ClaimTypes.Role,
+
+             NameClaimType =
+                 ClaimTypes.NameIdentifier,
+
+             ClockSkew =
+                 TimeSpan.Zero
+         };
+ });
+
+
+            services.AddAuthorization(options =>
             {
-                o.SaveToken = true;
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtSetting?.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtSetting?.Audience,
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting?.Key!)),
-                    RoleClaimType = ClaimTypes.Role
-                };
+                options.AddPolicy(
+                    AuthorizationPolicies.Admin,
+                    policy =>
+                    {
+                        policy
+                            .RequireAuthenticatedUser();
+
+                        policy
+                            .RequireRole(
+                                DefaultRoles.Admin
+                            );
+                    }
+                );
             });
+
 
             return services;
         }

@@ -1,4 +1,5 @@
-﻿using Omranco.BLL;
+﻿using Microsoft.AspNetCore.Authorization;
+using Omranco.BLL;
 using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Authentications.Requests;
 using Omranco.BLL.DTOS.Auths.Emails.Requests;
@@ -35,10 +36,17 @@ namespace Omranco.PL.Controllers
 
             return result.IsSuccess ? Ok() : result.ToProblem();
         }
+        [Authorize]
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var result = await _authService.ChangePasswordAsync(User.GetUserId().ToString()!, request);
+            var userId = User.GetUserId();
+
+            if (userId == 0)
+                return Unauthorized();
+
+            var result = await _authService.ChangePasswordAsync(userId.ToString(), request);
+
 
             return result.IsSuccess ? NoContent() : result.ToProblem();
         }

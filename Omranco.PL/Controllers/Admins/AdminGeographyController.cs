@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Omranco.BLL.Authorization;
 using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Geography.Requests;
 using Omranco.BLL.Services.Abstractions.GeographyServices;
@@ -7,7 +8,7 @@ namespace Omranco.PL.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/geography")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.Admin)]
 public sealed class AdminGeographyController
     : ControllerBase
 {

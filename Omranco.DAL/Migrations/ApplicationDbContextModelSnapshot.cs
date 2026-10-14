@@ -613,7 +613,9 @@ namespace Omranco.DAL.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("Sku");
+                    b.HasIndex("Sku")
+                        .IsUnique()
+                        .HasFilter("[Sku] IS NOT NULL");
 
                     b.ToTable("ProductVariants", (string)null);
                 });
@@ -637,6 +639,9 @@ namespace Omranco.DAL.Migrations
                     b.HasIndex("ProductAttributeId");
 
                     b.HasIndex("ProductAttributeOptionId");
+
+                    b.HasIndex("ProductVariantId", "ProductAttributeId")
+                        .IsUnique();
 
                     b.ToTable("ProductVariantValues", (string)null);
                 });

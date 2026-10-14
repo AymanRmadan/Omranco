@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Omranco.BLL;
+using Omranco.BLL.Authorization;
 using Omranco.BLL.Commons.ResponseResults;
 using Omranco.BLL.DTOS.Vendors.Requests;
 using Omranco.BLL.Services.Abstractions.VendorServices;
@@ -9,9 +10,8 @@ namespace Omranco.PL.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/vendors")]
-[Authorize]
-public sealed class AdminVendorsController
-    : ControllerBase
+[Authorize(Policy = AuthorizationPolicies.Admin)]
+public sealed class AdminVendorsController : ControllerBase
 {
     private readonly IVendorService
         _vendorService;
