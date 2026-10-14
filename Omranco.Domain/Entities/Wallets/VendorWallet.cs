@@ -16,6 +16,7 @@ namespace Omranco.Domain.Entities.Wallets
             = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
 
         // Navigation Properties

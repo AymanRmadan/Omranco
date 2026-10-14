@@ -46,6 +46,8 @@ namespace Omranco.DAL.Configurations.Rfqs
                 .WithMany()
                 .HasForeignKey(x => x.CreatedByAccountUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
     }
 }

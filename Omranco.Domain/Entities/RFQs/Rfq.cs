@@ -27,6 +27,8 @@ namespace Omranco.Domain.Entities.Rfqs
         public DateTime? ClosedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+        public byte[] RowVersion { get; set; }
+    = Array.Empty<byte>();
 
 
         // Navigation Properties

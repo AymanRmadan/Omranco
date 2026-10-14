@@ -85,4 +85,11 @@ public static class VendorPayoutErrors
             "A failure reason is required.",
             400
         );
+
+    public static readonly Error ConcurrencyConflict =
+    new(
+        "VendorPayout.ConcurrencyConflict",
+        "The payout or wallet was changed by another operation. Please retry.",
+        409
+    );
 }

@@ -482,10 +482,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         // Vendor - Submit Bid
         // =====================================================
 
-        public async Task<Result<int>> SubmitAsync(
-            int rfqId,
-            int currentUserId,
-            SubmitBidRequest request)
+        public async Task<Result<int>> SubmitAsync(int rfqId, int currentUserId, SubmitBidRequest request)
         {
             var vendor =
                 await GetApprovedVendorAsync(
@@ -723,14 +720,41 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             trackedInvitation.RespondedAt =
                 now;
 
+            try
+            {
+                await _unitOfWork
+                    .SaveChangeAsync();
 
-            await _unitOfWork
-                .SaveChangeAsync();
+
+                return Result.Success(
+                    bid.Id
+                );
+            }
+            catch (DbUpdateException)
+            {
+                var existingBid =
+                    await _unitOfWork
+                        .Bids
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.RfqId ==
+                                    rfqId
+                                &&
+                                x.VendorId ==
+                                    vendor.Id
+                        );
 
 
-            return Result.Success(
-                bid.Id
-            );
+                if (existingBid is not null)
+                {
+                    return Result.Failure<int>(
+                        BidErrors.AlreadySubmitted
+                    );
+                }
+
+
+                throw;
+            }
         }
 
 
@@ -826,10 +850,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         // Vendor - Update Bid
         // =====================================================
 
-        public async Task<Result> UpdateAsync(
-            int rfqId,
-            int currentUserId,
-            UpdateBidRequest request)
+        public async Task<Result> UpdateAsync(int rfqId, int currentUserId, UpdateBidRequest request)
         {
             var vendor =
                 await GetApprovedVendorAsync(
@@ -1028,11 +1049,19 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             }
 
 
-            await _unitOfWork
-                .SaveChangeAsync();
+            try
+            {
+                await _unitOfWork.SaveChangeAsync();
 
 
-            return Result.Success();
+                return Result.Success();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Failure(
+                    BidErrors.ConcurrencyConflict
+                );
+            }
         }
 
 
@@ -1040,9 +1069,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         // Vendor - Withdraw
         // =====================================================
 
-        public async Task<Result> WithdrawAsync(
-            int rfqId,
-            int currentUserId)
+        public async Task<Result> WithdrawAsync(int rfqId, int currentUserId)
         {
             var vendor =
                 await GetApprovedVendorAsync(
@@ -1150,11 +1177,20 @@ namespace Omranco.BLL.Services.Implementations.BidServices
                 now;
 
 
-            await _unitOfWork
-                .SaveChangeAsync();
+            try
+            {
+                await _unitOfWork
+                    .SaveChangeAsync();
 
 
-            return Result.Success();
+                return Result.Success();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Failure(
+                    BidErrors.ConcurrencyConflict
+                );
+            }
         }
 
 
@@ -1362,10 +1398,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         // Customer - Accept Bid
         // =====================================================
 
-        public async Task<Result<int>> AcceptAsync(
-            int rfqId,
-            int bidId,
-            int currentUserId)
+        public async Task<Result<int>> AcceptAsync(int rfqId, int bidId, int currentUserId)
         {
             var rfq =
                 await _unitOfWork
@@ -1858,13 +1891,68 @@ namespace Omranco.BLL.Services.Implementations.BidServices
                 );
 
 
-            await _unitOfWork
-                .SaveChangeAsync();
+            try
+            {
+                await _unitOfWork
+                    .SaveChangeAsync();
 
 
-            return Result.Success(
-                order.Id
-            );
+                return Result.Success(
+                    order.Id
+                );
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return await ResolveAwardConflictAsync(
+                    rfqId,
+                    bidId
+                );
+            }
+            catch (DbUpdateException)
+            {
+                /*
+                 * Order.RfqId و Order.BidId
+                 * عندك عليهم Unique Index.
+                 *
+                 * فممكن request تانية تكون سبقتنا
+                 * وأنشأت الـOrder بين الـread والـsave.
+                 */
+
+                var existingOrder =
+                    await _unitOfWork
+                        .Orders
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.RfqId ==
+                                rfqId
+                        );
+
+
+                if (existingOrder is not null)
+                {
+                    if (existingOrder.BidId ==
+                        bidId)
+                    {
+                        return Result.Success(
+                            existingOrder.Id
+                        );
+                    }
+
+
+                    return Result.Failure<int>(
+                        BidErrors.RfqAlreadyAwarded
+                    );
+                }
+
+
+                /*
+                 * لو مفيش Order فعلًا،
+                 * يبقى DbUpdateException لسبب مختلف.
+                 *
+                 * مانخبيش bug حقيقي.
+                 */
+                throw;
+            }
         }
 
 
@@ -1872,9 +1960,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         // Helpers
         // =====================================================
 
-        private async Task<Vendor?>
-            GetApprovedVendorAsync(
-                int currentUserId)
+        private async Task<Vendor?> GetApprovedVendorAsync(int currentUserId)
         {
             return await _unitOfWork
                 .Vendors
@@ -2311,9 +2397,54 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             );
         }
 
+        private async Task<Result<int>> ResolveAwardConflictAsync(int rfqId, int bidId)
+        {
+            /*
+             * ممكن request تانية تكون خلصت Award.
+             */
+            var existingOrder =
+                await _unitOfWork
+                    .Orders
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.RfqId ==
+                            rfqId
+                    );
 
-        private static string? Normalize(
-            string? value)
+
+            if (existingOrder is not null)
+            {
+                /*
+                 * Same request retried concurrently.
+                 */
+                if (existingOrder.BidId ==
+                    bidId)
+                {
+                    return Result.Success(
+                        existingOrder.Id
+                    );
+                }
+
+
+                /*
+                 * Bid مختلفة هي اللي كسبت.
+                 */
+                return Result.Failure<int>(
+                    BidErrors.RfqAlreadyAwarded
+                );
+            }
+
+
+            /*
+             * ممكن Vendor يكون عدل/سحب Bid
+             * في نفس اللحظة.
+             */
+            return Result.Failure<int>(
+                BidErrors.ConcurrencyConflict
+            );
+        }
+
+        private static string? Normalize(string? value)
         {
             return string.IsNullOrWhiteSpace(
                 value)
@@ -2331,10 +2462,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
         }
 
 
-        private sealed record BidInput(
-            ShippingCostType ShippingCostType,
-            decimal ShippingCost,
-            int LeadTimeDays,
+        private sealed record BidInput(ShippingCostType ShippingCostType, decimal ShippingCost, int LeadTimeDays,
             DateTime ValidUntil,
             decimal? OverallPrice,
             List<BidItemInput> Items
@@ -2354,5 +2482,7 @@ namespace Omranco.BLL.Services.Implementations.BidServices
             decimal ShippingCost,
             decimal TotalAmount
         );
+
+
     }
 }

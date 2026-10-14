@@ -237,9 +237,52 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
                         newWallet
                     );
 
+                try
+                {
+                    await _unitOfWork
+                        .SaveChangeAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return Result.Failure<int>(
+                        WalletErrors.ConcurrencyConflict
+                    );
+                }
+                catch (DbUpdateException)
+                {
+                    /*
+                     * ممكن نفس earning تكون اتحفظت
+                     * بواسطة request تانية.
+                     */
+                    var completedTransaction =
+                        await _unitOfWork
+                            .VendorWalletTransactions
+                            .FirstOrDefaultAsync(
+                                x =>
+                                    x.Reference ==
+                                    reference
+                            );
 
-                await _unitOfWork
-                    .SaveChangeAsync();
+
+                    if (completedTransaction is not null)
+                    {
+                        return Result.Success(
+                            completedTransaction.Id
+                        );
+                    }
+
+
+                    /*
+                     * ممكن عملية أخرى أنشأت Wallet
+                     * لنفس Vendor بسبب VendorId unique.
+                     *
+                     * العملية الحالية لم يتم Credit لها،
+                     * فترجع retryable conflict.
+                     */
+                    return Result.Failure<int>(
+                        WalletErrors.ConcurrencyConflict
+                    );
+                }
 
 
                 var transactionId =
@@ -337,8 +380,52 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
                 );
 
 
-            await _unitOfWork
-                .SaveChangeAsync();
+            try
+            {
+                await _unitOfWork
+                    .SaveChangeAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Failure<int>(
+                    WalletErrors.ConcurrencyConflict
+                );
+            }
+            catch (DbUpdateException)
+            {
+                /*
+                 * ممكن نفس earning تكون اتحفظت
+                 * بواسطة request تانية.
+                 */
+                var completedTransaction =
+                    await _unitOfWork
+                        .VendorWalletTransactions
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Reference ==
+                                reference
+                        );
+
+
+                if (completedTransaction is not null)
+                {
+                    return Result.Success(
+                        completedTransaction.Id
+                    );
+                }
+
+
+                /*
+                 * ممكن عملية أخرى أنشأت Wallet
+                 * لنفس Vendor بسبب VendorId unique.
+                 *
+                 * العملية الحالية لم يتم Credit لها،
+                 * فترجع retryable conflict.
+                 */
+                return Result.Failure<int>(
+                    WalletErrors.ConcurrencyConflict
+                );
+            }
 
 
             return Result.Success(
@@ -670,12 +757,63 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
                     walletTransaction
                 );
 
+            try
+            {
+                await _unitOfWork
+                    .SaveChangeAsync();
 
-            await _unitOfWork
-                .SaveChangeAsync();
+
+                return Result.Success();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                /*
+                 * ممكن نفس Refund تكون اتطبقت
+                 * بواسطة webhook/request تانية.
+                 */
+                var completedTransaction =
+                    await _unitOfWork
+                        .VendorWalletTransactions
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Reference ==
+                                refundReference
+                        );
 
 
-            return Result.Success();
+                if (completedTransaction is not null)
+                {
+                    return Result.Success();
+                }
+
+
+                return Result.Failure(
+                    WalletErrors.ConcurrencyConflict
+                );
+            }
+            catch (DbUpdateException)
+            {
+                var completedTransaction =
+                    await _unitOfWork
+                        .VendorWalletTransactions
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Reference ==
+                                refundReference
+                        );
+
+
+                if (completedTransaction is not null)
+                {
+                    return Result.Success();
+                }
+
+
+                throw;
+            }
+
+
+
         }
     }
 }

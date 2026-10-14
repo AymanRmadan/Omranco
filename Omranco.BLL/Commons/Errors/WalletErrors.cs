@@ -28,5 +28,12 @@
         "Vendor wallet not found.",
         404
     );
+
+        public static readonly Error ConcurrencyConflict =
+    new(
+        "Wallet.ConcurrencyConflict",
+        "The vendor wallet was changed by another operation. Please retry.",
+        409
+    );
     }
 }

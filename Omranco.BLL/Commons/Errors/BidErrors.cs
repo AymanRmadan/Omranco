@@ -127,5 +127,12 @@
                 "A bid has already been accepted for this RFQ.",
                 400
             );
+
+        public static readonly Error ConcurrencyConflict =
+    new(
+        "Bid.ConcurrencyConflict",
+        "The bid or RFQ was changed by another request. Please retry.",
+        409
+    );
     }
 }

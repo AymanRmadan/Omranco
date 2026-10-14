@@ -69,6 +69,8 @@ public sealed class VendorPayoutRequest : BaseEntity<int>
 
     public DateTime? UpdatedAt { get; set; }
 
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
 
     // ==========================================
     // Navigation Properties

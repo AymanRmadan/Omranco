@@ -30,6 +30,8 @@ namespace Omranco.DAL.Configurations.Wallets
                     x => x.VendorId
                 )
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
     }
 }

@@ -54,6 +54,8 @@ namespace Omranco.DAL.Configurations.Bids
                 .WithMany()
                 .HasForeignKey(x => x.VendorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
     }
 }

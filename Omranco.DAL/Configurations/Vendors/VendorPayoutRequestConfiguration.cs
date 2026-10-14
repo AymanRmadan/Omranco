@@ -2,8 +2,7 @@
 
 namespace Omranco.DAL.Configurations.Vendors;
 
-public sealed class VendorPayoutRequestConfiguration
-    : IEntityTypeConfiguration<VendorPayoutRequest>
+public sealed class VendorPayoutRequestConfiguration : IEntityTypeConfiguration<VendorPayoutRequest>
 {
     public void Configure(
         EntityTypeBuilder<VendorPayoutRequest> builder)
@@ -97,5 +96,7 @@ public sealed class VendorPayoutRequestConfiguration
             .WithMany()
             .HasForeignKey(x => x.ReviewedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }

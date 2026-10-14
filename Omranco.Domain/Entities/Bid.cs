@@ -33,6 +33,7 @@ namespace Omranco.Domain.Entities.Bids
             = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
         public DateTime? WithdrawnAt { get; set; }
         public DateTime? AcceptedAt { get; set; }

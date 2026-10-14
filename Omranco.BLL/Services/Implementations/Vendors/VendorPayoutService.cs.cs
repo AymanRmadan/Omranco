@@ -275,6 +275,8 @@ public sealed class VendorPayoutService
         var now =
             DateTime.UtcNow;
 
+        wallet.UpdatedAt = now;
+
 
         var payout =
     new VendorPayoutRequest
@@ -332,8 +334,19 @@ public sealed class VendorPayoutService
             );
 
 
-        await _unitOfWork
-            .SaveChangeAsync();
+        try
+        {
+            await _unitOfWork
+                .SaveChangeAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result
+                .Failure<VendorPayoutResponse>(
+                    VendorPayoutErrors
+                        .ConcurrencyConflict
+                );
+        }
 
 
         return Result.Success(
@@ -346,9 +359,7 @@ public sealed class VendorPayoutService
     // Vendor - Cancel Pending Request
     // =========================================================
 
-    public async Task<Result> CancelAsync(
-        int payoutRequestId,
-        int currentUserId)
+    public async Task<Result> CancelAsync(int payoutRequestId, int currentUserId)
     {
         var vendor =
             await GetVendorAsync(
@@ -428,11 +439,19 @@ public sealed class VendorPayoutService
             now;
 
 
-        await _unitOfWork
-            .SaveChangeAsync();
+        var saveResult =
+    await SaveWithConcurrencyCheckAsync();
+
+
+        if (saveResult.IsFailure)
+        {
+            return saveResult;
+        }
 
 
         return Result.Success();
+
+
     }
 
 
@@ -440,9 +459,7 @@ public sealed class VendorPayoutService
     // Admin - List
     // =========================================================
 
-    public async Task<Result<List<VendorPayoutResponse>>>
-        GetAllAsync(
-            VendorPayoutRequestStatus? status)
+    public async Task<Result<List<VendorPayoutResponse>>> GetAllAsync(VendorPayoutRequestStatus? status)
     {
         List<VendorPayoutRequest> payouts;
 
@@ -492,10 +509,7 @@ public sealed class VendorPayoutService
     // Admin - Approve
     // =========================================================
 
-    public async Task<Result> ApproveAsync(
-        int payoutRequestId,
-        int currentUserId,
-        ApproveVendorPayoutRequest request)
+    public async Task<Result> ApproveAsync(int payoutRequestId, int currentUserId, ApproveVendorPayoutRequest request)
     {
         var payout =
             await _unitOfWork
@@ -561,8 +575,14 @@ public sealed class VendorPayoutService
             now;
 
 
-        await _unitOfWork
-            .SaveChangeAsync();
+        var saveResult =
+    await SaveWithConcurrencyCheckAsync();
+
+
+        if (saveResult.IsFailure)
+        {
+            return saveResult;
+        }
 
 
         return Result.Success();
@@ -573,10 +593,7 @@ public sealed class VendorPayoutService
     // Admin - Reject
     // =========================================================
 
-    public async Task<Result> RejectAsync(
-        int payoutRequestId,
-        int currentUserId,
-        RejectVendorPayoutRequest request)
+    public async Task<Result> RejectAsync(int payoutRequestId, int currentUserId, RejectVendorPayoutRequest request)
     {
         if (string.IsNullOrWhiteSpace(
                 request.ReviewNotes))
@@ -652,8 +669,14 @@ public sealed class VendorPayoutService
             now;
 
 
-        await _unitOfWork
-            .SaveChangeAsync();
+        var saveResult =
+     await SaveWithConcurrencyCheckAsync();
+
+
+        if (saveResult.IsFailure)
+        {
+            return saveResult;
+        }
 
 
         return Result.Success();
@@ -664,9 +687,7 @@ public sealed class VendorPayoutService
     // Admin - Start Processing
     // =========================================================
 
-    public async Task<Result> StartProcessingAsync(
-        int payoutRequestId,
-        ProcessVendorPayoutRequest request)
+    public async Task<Result> StartProcessingAsync(int payoutRequestId, ProcessVendorPayoutRequest request)
     {
         var payout =
             await _unitOfWork
@@ -708,6 +729,12 @@ public sealed class VendorPayoutService
                             payout.VendorId
                 );
 
+        var trackedWallet =
+    await _unitOfWork
+        .VendorWallets
+        .FindAsync(
+            wallet.Id
+        );
 
         if (wallet is null)
         {
@@ -715,6 +742,15 @@ public sealed class VendorPayoutService
                 VendorPayoutErrors.WalletNotFound
             );
         }
+
+        if (trackedWallet is null)
+        {
+            return Result.Failure(
+                VendorPayoutErrors.WalletNotFound
+            );
+        }
+
+
 
 
         /*
@@ -730,14 +766,10 @@ public sealed class VendorPayoutService
             );
 
 
-        var available =
-            wallet.Balance
-            -
-            reservedByOtherRequests;
+        var available = trackedWallet.Balance - reservedByOtherRequests;
 
 
-        if (available <
-            payout.Amount)
+        if (available < payout.Amount)
         {
             return Result.Failure(
                 VendorPayoutErrors
@@ -762,8 +794,7 @@ public sealed class VendorPayoutService
         }
 
 
-        var now =
-            DateTime.UtcNow;
+        var now = DateTime.UtcNow;
 
 
         trackedPayout.Status =
@@ -788,6 +819,19 @@ public sealed class VendorPayoutService
             now;
 
 
+        trackedWallet.UpdatedAt = now;
+
+        var saveResult = await SaveWithConcurrencyCheckAsync();
+
+        if (saveResult.IsFailure)
+        {
+            return saveResult;
+        }
+
+
+        return Result.Success();
+
+
         await _unitOfWork
             .SaveChangeAsync();
 
@@ -800,8 +844,7 @@ public sealed class VendorPayoutService
     // Admin - Paid
     // =========================================================
 
-    public async Task<Result> MarkPaidAsync(
-        int payoutRequestId)
+    public async Task<Result> MarkPaidAsync(int payoutRequestId)
     {
         var payout =
             await _unitOfWork
@@ -869,6 +912,19 @@ public sealed class VendorPayoutService
                     trackedPayout.UpdatedAt =
                         naw;
 
+
+                    var saveResult = await SaveWithConcurrencyCheckAsync();
+
+
+                    if (saveResult.IsFailure)
+                    {
+                        /*
+                         * Transaction نفسها موجودة بالفعل،
+                         * فحتى لو status reconciliation اتعارضت
+                         * مفيش أي double debit.
+                         */
+                        return saveResult;
+                    }
 
                     await _unitOfWork.SaveChangeAsync();
                 }
@@ -1025,12 +1081,26 @@ public sealed class VendorPayoutService
         trackedPayoutRequest.UpdatedAt =
             now;
 
+        try
+        {
+            await _unitOfWork
+                .SaveChangeAsync();
 
-        await _unitOfWork
-            .SaveChangeAsync();
 
-
-        return Result.Success();
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return await ResolveSettlementConflictAsync(
+                settlementReference
+            );
+        }
+        catch (DbUpdateException)
+        {
+            return await ResolveSettlementConflictAsync(
+                settlementReference
+            );
+        }
     }
 
 
@@ -1038,9 +1108,7 @@ public sealed class VendorPayoutService
     // Admin - Failed
     // =========================================================
 
-    public async Task<Result> MarkFailedAsync(
-        int payoutRequestId,
-        FailVendorPayoutRequest request)
+    public async Task<Result> MarkFailedAsync(int payoutRequestId, FailVendorPayoutRequest request)
     {
         if (string.IsNullOrWhiteSpace(
                 request.FailureReason))
@@ -1109,9 +1177,14 @@ public sealed class VendorPayoutService
         trackedPayout.UpdatedAt =
             now;
 
+        var saveResult =
+    await SaveWithConcurrencyCheckAsync();
 
-        await _unitOfWork
-            .SaveChangeAsync();
+
+        if (saveResult.IsFailure)
+        {
+            return saveResult;
+        }
 
 
         return Result.Success();
@@ -1135,9 +1208,33 @@ public sealed class VendorPayoutService
     }
 
 
-    private async Task<decimal> GetReservedAmountAsync(
-        int vendorId,
-        int? excludePayoutId = null)
+    private async Task<Result> ResolveSettlementConflictAsync(string settlementReference)
+    {
+        var existingSettlement =
+            await _unitOfWork
+                .VendorWalletTransactions
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Reference ==
+                        settlementReference
+                );
+
+
+        /*
+         * Request أخرى أكملت Settlement بالفعل.
+         */
+        if (existingSettlement is not null)
+        {
+            return Result.Success();
+        }
+
+
+        return Result.Failure(
+            VendorPayoutErrors
+                .ConcurrencyConflict
+        );
+    }
+    private async Task<decimal> GetReservedAmountAsync(int vendorId, int? excludePayoutId = null)
     {
         var activePayouts =
             await _unitOfWork
@@ -1261,5 +1358,27 @@ public sealed class VendorPayoutService
             CompletedAt:
                 payout.CompletedAt
         );
+
+
+    }
+
+    private async Task<Result>
+    SaveWithConcurrencyCheckAsync()
+    {
+        try
+        {
+            await _unitOfWork
+                .SaveChangeAsync();
+
+
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Failure(
+                VendorPayoutErrors
+                    .ConcurrencyConflict
+            );
+        }
     }
 }

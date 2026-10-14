@@ -17,8 +17,7 @@ namespace Omranco.DAL.Configurations.Wallets
                 .HasMaxLength(30)
                 .IsRequired();
 
-            builder.HasIndex(x => x.Reference)
-    .IsUnique();
+            builder.HasIndex(x => x.Reference).IsUnique();
 
             builder.Property(x => x.Direction)
                 .HasConversion<string>()
@@ -41,8 +40,7 @@ namespace Omranco.DAL.Configurations.Wallets
             builder.Property(x => x.Notes)
                 .HasMaxLength(1000);
 
-            builder.HasIndex(x => x.Reference)
-                .IsUnique();
+
 
             builder.HasIndex(x => new
             {
