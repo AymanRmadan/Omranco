@@ -22,5 +22,11 @@
                 "Vendor net amount must be greater than zero.",
                 400
             );
+        public static readonly Error WalletNotFound =
+    new(
+        "Wallet.NotFound",
+        "Vendor wallet not found.",
+        404
+    );
     }
 }

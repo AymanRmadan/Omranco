@@ -552,9 +552,24 @@ public sealed class PaymentService : IPaymentService
             if (trackedPayment.Status == PaymentStatus.Paid)
             {
                 trackedAttempt.Status = PaymentAttemptStatus.Succeeded;
+                await _unitOfWork.SaveChangeAsync();
 
-                await _unitOfWork
-                    .SaveChangeAsync();
+                /*
+                 * Reconciliation:
+                 *
+                 * لو Payment كانت اتحفظت Paid
+                 * لكن Wallet settlement فشلت قبل كده،
+                 * duplicate webhook يصلح الحالة.
+                 */
+                var setlementResult = await _orderSettlementService
+                        .TrySettleAsync(trackedPayment.OrderId);
+
+
+                if (setlementResult.IsFailure)
+                {
+                    return Result.Failure(setlementResult.Error);
+                }
+
 
                 return Result.Success();
             }

@@ -13,7 +13,7 @@ public static class PaymentErrors
         new(
             "Payment.AccessDenied",
             "You do not have access to this payment.",
-            401
+            403
         );
 
     public static readonly Error AlreadyPaid =

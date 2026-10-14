@@ -22,13 +22,12 @@ public sealed class VendorPayoutService
     }
 
 
+
     // =========================================================
     // Vendor - Wallet Summary
     // =========================================================
 
-    public async Task<Result<VendorWalletSummaryResponse>>
-        GetWalletSummaryAsync(
-            int currentUserId)
+    public async Task<Result<VendorWalletSummaryResponse>> GetWalletSummaryAsync(int currentUserId)
     {
         var vendor =
             await GetVendorAsync(currentUserId);

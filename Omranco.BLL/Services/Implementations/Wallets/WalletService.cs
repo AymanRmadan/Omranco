@@ -580,7 +580,7 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
             if (wallet is null)
             {
                 return Result.Failure(
-                    WalletErrors.OrderNotFound
+                    WalletErrors.WalletNotFound
                 );
             }
 
@@ -596,7 +596,7 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
             if (trackedWallet is null)
             {
                 return Result.Failure(
-                    WalletErrors.OrderNotFound
+                    WalletErrors.WalletNotFound
                 );
             }
 
@@ -616,11 +616,11 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
             // Allow negative balance
             // ==========================================
 
-            trackedWallet.Balance =
-                balanceAfter;
+            trackedWallet.Balance = balanceAfter;
 
-            trackedWallet.UpdatedAt =
-                DateTime.UtcNow;
+            trackedWallet.TotalEarned -= debitAmount;
+
+            trackedWallet.UpdatedAt = DateTime.UtcNow;
 
 
             // ==========================================
@@ -628,40 +628,40 @@ namespace Omranco.BLL.Services.Implementations.WalletServices
             // ==========================================
 
             var walletTransaction =
-                new VendorWalletTransaction
-                {
-                    VendorWalletId =
-                        trackedWallet.Id,
+    new VendorWalletTransaction
+    {
+        VendorWalletId =
+            trackedWallet.Id,
 
-                    OrderId =
-                        order.Id,
+        OrderId =
+            order.Id,
 
-                    Type =
-                        VendorWalletTransactionType
-                            .Refund,
+        Type =
+            VendorWalletTransactionType
+                .Refund,
 
-                    Direction =
-                        WalletTransactionDirection
-                            .Debit,
+        Direction =
+            WalletTransactionDirection
+                .Debit,
 
-                    Amount =
-                        debitAmount,
+        Amount =
+            debitAmount,
 
-                    BalanceBefore =
-                        balanceBefore,
+        BalanceBefore =
+            balanceBefore,
 
-                    BalanceAfter =
-                        balanceAfter,
+        BalanceAfter =
+            balanceAfter,
 
-                    Reference =
-                        refundReference,
+        Reference =
+            refundReference,
 
-                    Notes =
-                        $"Refund #{refund.Id} for order {order.Number}",
+        Notes =
+            $"Refund #{refund.Id} for order {order.Number}",
 
-                    CreatedAt =
-                        DateTime.UtcNow
-                };
+        CreatedAt =
+            DateTime.UtcNow
+    };
 
 
             await _unitOfWork
